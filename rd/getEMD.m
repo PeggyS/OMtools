@@ -4,17 +4,26 @@
 % Written by Jonathan Jacobs
 % January 2018 (last mod: 07 January 2018)
 
-function EMD = getEMD
+function EMD = getEMD(emd_name)
 
 % check for emData struct in memory. if only one, assume it.
 temp=evalin('base','whos');
 cnt=0;
 tlen=length(temp);
 a=cell(tlen,1);
+
 for i=1:tlen
    if strcmpi(temp(i).class,'emData')
-      cnt=cnt+1;
-      a{cnt}=temp(i).name;
+      if nargin==0
+         cnt=cnt+1;
+         a{cnt}=temp(i).name;
+      else
+         if strcmpi( strtok(emd_name,'.'),temp(i).name )
+            a{1}=temp(i).name;
+            cnt=1;
+            break
+         end
+      end
    end
 end
 
@@ -24,7 +33,10 @@ switch cnt
       return
    case 1
       EMD = evalin('base', a{1});
-      fprintf('%s selected\r',a{1});
+      if nargin==1
+      else
+         fprintf('%s selected\r',a{1});
+      end
    case num2cell(2:100)
       % prompt for which one
       disp('0) Cancel')

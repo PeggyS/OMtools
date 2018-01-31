@@ -28,7 +28,7 @@ if nargin<1
          return
       end
    elseif x==1
-      j=1;
+      emd = evalin('base',char(candidate{1}) );
    else
       disp('Which eye-movement data do you want to extract?')
       for i=1:x
@@ -38,15 +38,15 @@ if nargin<1
       while j<1 || j>x
          j=input('--> ');
       end
+      emd = evalin('base',char(candidate{j}) );
    end
-   emd = evalin('base',char(candidate{j}) );
 end
 
 dataname = emd.filename;       assignin('base','dataname',dataname);
 samp_freq = emd.samp_freq;     assignin('base','samp_freq',samp_freq);
 
 if ~isempty(emd.start_times)
-   global start_times
+   global start_times %#ok<*TLEV>
    start_times = emd.start_times;
    assignin('base','start_times',start_times);
 end
@@ -54,40 +54,58 @@ end
 disp('Channels saved to base workspace: ')
 
 if ~isempty(emd.rh.data)
-   global rh; rh=emd.rh.data; assignin('base','rh',rh); disp([sprintf('\b'),' rh']);
+   global rh;  rh =emd.rh.data; assignin('base','rh',rh); 
+   global rhv; rhv=emd.rh.vel;  assignin('base','rhv',rhv); 
+   disp([sprintf('\b'),' rh']);
 end
 if ~isempty(emd.lh.data)
-   global lh; lh=emd.lh.data; assignin('base','lh',lh); disp([sprintf('\b'),' lh']);
+   global lh;  lh =emd.lh.data; assignin('base','lh',lh); 
+   global lhv; lhv=emd.lh.vel;  assignin('base','lhv',lhv); 
+   disp([sprintf('\b'),' lh']);
 end
 if ~isempty(emd.rv.data)
-   global rv; rv=emd.rv.data; assignin('base','rv',rv); disp([sprintf('\b'),' rv']);
+   global rv;  rv =emd.rv.data; assignin('base','rv',rv); 
+   global rvv; rhv=emd.rv.vel;  assignin('base','rvv',rvv); 
+   disp([sprintf('\b'),' rv']);
 end
 if ~isempty(emd.lv.data)
-   global lv; lv=emd.lv.data; assignin('base','lv',lv); disp([sprintf('\b'),' lv']);
+   global lv;  lv =emd.lv.data; assignin('base','lv',lv); 
+   global lvv; lhv=emd.lv.vel;  assignin('base','lvv',lvv); 
+   disp([sprintf('\b'),' lv']);
 end
 if ~isempty(emd.rt.data)
-   global rt; rt=emd.rt.data; assignin('base','rt',rt); disp([sprintf('\b'),' rt']);
+   global rt;  rt =emd.rt.data; assignin('base','rt',rt); 
+   global rtv; rtv=emd.rt.vel;  assignin('base','rtv',rtv); 
+   disp([sprintf('\b'),' rt']);
 end
 if ~isempty(emd.lt.data)
-   global lt; lt=emd.lt.data; assignin('base','lt',lt); disp([sprintf('\b'),' lt']);
+   global lt;  lt =emd.lt.data; assignin('base','lt',lt); 
+   global ltv; lhv=emd.lt.vel;  assignin('base','ltv',ltv); 
+   disp([sprintf('\b'),' lt']);
 end
 if ~isempty(emd.st.data)
-   global st; st=emd.st.data; assignin('base','st',st); disp([sprintf('\b'),' st']);
+   global st; st=emd.st.data; assignin('base','st',st); 
+   disp([sprintf('\b'),' st']);
 end
 if ~isempty(emd.sv.data)
-   global sv; sv=emd.sv.data; assignin('base','sv',sv); disp([sprintf('\b'),' sv']);
+   global sv; sv=emd.sv.data; assignin('base','sv',sv); 
+   disp([sprintf('\b'),' sv']);
 end
 if ~isempty(emd.ds.data)
-   global ds; ds=emd.ds.data; assignin('base','ds',ds); disp([sprintf('\b'),' ds']);
+   global ds; ds=emd.ds.data; assignin('base','ds',ds); 
+   disp([sprintf('\b'),' ds']);
 end
 if ~isempty(emd.tl.data)
-   global tl; tl=emd.tl.data; assignin('base','tl',tl); disp([sprintf('\b'),' tl']);
+   global tl; tl=emd.tl.data; assignin('base','tl',tl); 
+   disp([sprintf('\b'),' tl']);
 end
 if ~isempty(emd.hh.data)
-   global hh; hh=emd.hh.data; assignin('base','hh',hh); disp([sprintf('\b'),' hh']);
+   global hh; hh=emd.hh.data; assignin('base','hh',hh); 
+   disp([sprintf('\b'),' hh']);
 end
 if ~isempty(emd.hv.data)
-   global hv; hv=emd.hv.data; assignin('base','hv',hv); disp([sprintf('\b'),' hv']);
+   global hv; hv=emd.hv.data; assignin('base','hv',hv); 
+   disp([sprintf('\b'),' hv']);
 end
 
 % ask to load 'extras' file?

@@ -1,4 +1,4 @@
-% getEMD.m: select EM data structure from base memory.
+% showEMD.m: select EM data structure from base memory.
 % usage: EMD = getEMD;
 
 % Written by Jonathan Jacobs
