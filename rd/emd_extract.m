@@ -42,8 +42,8 @@ if nargin<1
    end
 end
 
-dataname = emd.filename;       assignin('base','dataname',dataname);
-samp_freq = emd.samp_freq;     assignin('base','samp_freq',samp_freq);
+dataname  = emd.filename;  assignin('base','dataname',dataname);
+samp_freq = emd.samp_freq; assignin('base','samp_freq',samp_freq);
 
 if ~isempty(emd.start_times)
    global start_times %#ok<*TLEV>
