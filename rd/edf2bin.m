@@ -203,95 +203,144 @@ end % for ii
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Now parse the EVENTS file for saccades, fixations, blinks, GAZE and/or HREF
 events = importdata([pn fname '_events.asc'],char(13)); % '13' is CR char.
-f_found=1; s_found=1; b_found=1;
+% f_found=1; s_found=1; b_found=1;
+f_found=0; s_found=0; b_found=0;
 out_found=0; out_type = 'not found';
-recnum = 1;
+% recnum = 1;
+recnum = 0; % no records yet, 'START' will indicate a new record
 for jj = 1:length(events)
    %disp(events{jj})
    if length(events{jj})>=17
       split_line = proclinec(events{jj});
-      if length(split_line) > 3
-         % use the event time (3rd value in the split/processed event line and start_time array to determine the recnum
-         % if there is an event (EFIX, ESACC, EBLINK) before the first
-         % START  event, then there will be an error!
-         recnum = find(start_time <= str2double(split_line{3}), 1, 'last');
-      end
-      %       temptime = isdigit(events{jj}(1:17));
-      % 	  tt = find(temptime==1);
-      % 	  if ~isempty(tt)
-      % 		  start = tt(1);
-      % 		  stop = tt( diff(tt)>1 );
-      % 		  temptime = str2double(events{jj}(start:stop)); % the time of the event
-      
-      
-      % 		  if length(start_time) > recnum && temptime >= start_time(recnum+1)
-      % 			  recnum = recnum+1;
-      % 		  end
-      
-      % 	  end
-   end
-   
-   str_temp = strfind( events{jj}, 'EVENTS');
-   if isempty(str_temp), str_temp = 0; end
-   if str_temp == 1 && out_found == 0
-      if strfind( events{jj}, 'GAZE')
-         out_type = 'gaze';
-         out_found = 1;
-      elseif strfind( events{jj}, 'HREF')
-         out_type = 'href';
-         out_found = 1;
-      else
-         %out_type = 'unknown';
-      end
-   end
-   
-   % find fixations
-   str_temp = strfind( events{jj}, 'EFIX');
-   if str_temp
-      [fix_words, numwords]=proclinec(events{jj});
-      fix(recnum).eye{f_found}=fix_words{2};
-      fix(recnum).start(f_found) = str2double(fix_words{3});
-      fix(recnum).end(f_found) = str2double(fix_words{4});
-      fix(recnum).dur(f_found) = str2double(fix_words{5});
-      fix(recnum).xpos(f_found) = str2double(fix_words{6});
-      fix(recnum).ypos(f_found) = str2double(fix_words{7});
-      fix(recnum).pupi(f_found) = str2double(fix_words{8});
-      if numwords > 8
-         fix(recnum).xres(f_found) = str2double(fix_words{9});
-         fix(recnum).yres(f_found) = str2double(fix_words{10});
-      end
-      f_found = f_found+1;
-   end
-   % find saccades
-   str_temp = strfind( events{jj}, 'ESACC');
-   if str_temp
-      [sac_words, numwords]=proclinec(events{jj});
-      sacc(recnum).eye{s_found}=sac_words{2};
-      sacc(recnum).start(s_found) = str2double(sac_words{3});
-      sacc(recnum).end(s_found) = str2double(sac_words{4});
-      sacc(recnum).dur(s_found) = str2double(sac_words{5});
-      sacc(recnum).xpos(s_found) = str2double(sac_words{6});
-      sacc(recnum).ypos(s_found) = str2double(sac_words{7});
-      sacc(recnum).xposend(s_found) = str2double(sac_words{8});
-      sacc(recnum).yposend(s_found) = str2double(sac_words{9});
-      sacc(recnum).ampl(s_found) = str2double(sac_words{10});
-      sacc(recnum).pvel(s_found) = str2double(sac_words{11});
-      if numwords > 11
-         sacc(recnum).xres(s_found) = str2double(sac_words{12});
-         sacc(recnum).yres(s_found) = str2double(sac_words{13});
-      end
-      s_found=s_found+1;
-   end
-   %find blinks
-   str_temp = strfind( events{jj}, 'EBLINK');
-   if str_temp
-      [blink_words, ~]=proclinec(events{jj});
-      blink(recnum).eye{b_found} = blink_words{2};
-      blink(recnum).start(b_found) = str2double(blink_words{3});
-      blink(recnum).end(b_found) = str2double(blink_words{4});
-      blink(recnum).dur(b_found) = str2double(blink_words{5});
-      b_found=b_found+1;
-   end
+
+	  switch split_line{1}	% examine the 1st word in the line
+		  case 'START'
+			  recnum = find(start_time <= str2double(split_line{2}), 1, 'last');
+			  f_found=0; s_found=0; b_found=0;
+		  case 'EVENTS'
+			  out_type = lower(split_line{2});
+		  case 'EFIX'
+			  f_found = f_found+1;
+			  fix(recnum).eye{f_found}=split_line{2};
+			  fix(recnum).start(f_found) = str2double(split_line{3});
+			  fix(recnum).end(f_found) = str2double(split_line{4});
+			  fix(recnum).dur(f_found) = str2double(split_line{5});
+			  fix(recnum).xpos(f_found) = str2double(split_line{6});
+			  fix(recnum).ypos(f_found) = str2double(split_line{7});
+			  fix(recnum).pupi(f_found) = str2double(split_line{8});
+			  if length(split_line) > 8
+				  fix(recnum).xres(f_found) = str2double(split_line{9});
+				  fix(recnum).yres(f_found) = str2double(split_line{10});
+			  end
+			  
+		  case 'ESACC'
+			  s_found=s_found+1;
+			  sacc(recnum).eye{s_found}=split_line{2};
+			  sacc(recnum).start(s_found) = str2double(split_line{3});
+			  sacc(recnum).end(s_found) = str2double(split_line{4});
+			  sacc(recnum).dur(s_found) = str2double(split_line{5});
+			  sacc(recnum).xpos(s_found) = str2double(split_line{6});
+			  sacc(recnum).ypos(s_found) = str2double(split_line{7});
+			  sacc(recnum).xposend(s_found) = str2double(split_line{8});
+			  sacc(recnum).yposend(s_found) = str2double(split_line{9});
+			  sacc(recnum).ampl(s_found) = str2double(split_line{10});
+			  sacc(recnum).pvel(s_found) = str2double(split_line{11});
+			  if length(split_line) > 11
+				  sacc(recnum).xres(s_found) = str2double(split_line{12});
+				  sacc(recnum).yres(s_found) = str2double(split_line{13});
+			  end
+			  
+		  case 'EBLINK'
+			  b_found=b_found+1;
+			  blink(recnum).eye{b_found} = split_line{2};
+			  blink(recnum).start(b_found) = str2double(split_line{3});
+			  blink(recnum).end(b_found) = str2double(split_line{4});
+			  blink(recnum).dur(b_found) = str2double(split_line{5});
+			  
+	  end % switch case first word of the line
+   end % if length of line is long enough to bother looking at
+	  %       if length(split_line) > 3
+%          % use the event time (3rd value in the split/processed event line and start_time array to determine the recnum
+%          % if there is an event (EFIX, ESACC, EBLINK) before the first
+%          % START  event, then there will be an error!
+%          recnum = find(start_time <= str2double(split_line{3}), 1, 'last');
+%       end
+%       %       temptime = isdigit(events{jj}(1:17));
+%       % 	  tt = find(temptime==1);
+%       % 	  if ~isempty(tt)
+%       % 		  start = tt(1);
+%       % 		  stop = tt( diff(tt)>1 );
+%       % 		  temptime = str2double(events{jj}(start:stop)); % the time of the event
+%       
+%       
+%       % 		  if length(start_time) > recnum && temptime >= start_time(recnum+1)
+%       % 			  recnum = recnum+1;
+%       % 		  end
+%       
+%       % 	  end
+%    end
+%    
+%    str_temp = strfind( events{jj}, 'EVENTS');
+%    if isempty(str_temp), str_temp = 0; end
+%    if str_temp == 1 && out_found == 0
+%       if strfind( events{jj}, 'GAZE')
+%          out_type = 'gaze';
+%          out_found = 1;
+%       elseif strfind( events{jj}, 'HREF')
+%          out_type = 'href';
+%          out_found = 1;
+%       else
+%          %out_type = 'unknown';
+%       end
+%    end
+%    
+%    % find fixations
+%    str_temp = strfind( events{jj}, 'EFIX');
+%    if str_temp
+%       [fix_words, numwords]=proclinec(events{jj});
+%       fix(recnum).eye{f_found}=fix_words{2};
+%       fix(recnum).start(f_found) = str2double(fix_words{3});
+%       fix(recnum).end(f_found) = str2double(fix_words{4});
+%       fix(recnum).dur(f_found) = str2double(fix_words{5});
+%       fix(recnum).xpos(f_found) = str2double(fix_words{6});
+%       fix(recnum).ypos(f_found) = str2double(fix_words{7});
+%       fix(recnum).pupi(f_found) = str2double(fix_words{8});
+%       if numwords > 8
+%          fix(recnum).xres(f_found) = str2double(fix_words{9});
+%          fix(recnum).yres(f_found) = str2double(fix_words{10});
+%       end
+%       f_found = f_found+1;
+%    end
+%    % find saccades
+%    str_temp = strfind( events{jj}, 'ESACC');
+%    if str_temp
+%       [sac_words, numwords]=proclinec(events{jj});
+%       sacc(recnum).eye{s_found}=sac_words{2};
+%       sacc(recnum).start(s_found) = str2double(sac_words{3});
+%       sacc(recnum).end(s_found) = str2double(sac_words{4});
+%       sacc(recnum).dur(s_found) = str2double(sac_words{5});
+%       sacc(recnum).xpos(s_found) = str2double(sac_words{6});
+%       sacc(recnum).ypos(s_found) = str2double(sac_words{7});
+%       sacc(recnum).xposend(s_found) = str2double(sac_words{8});
+%       sacc(recnum).yposend(s_found) = str2double(sac_words{9});
+%       sacc(recnum).ampl(s_found) = str2double(sac_words{10});
+%       sacc(recnum).pvel(s_found) = str2double(sac_words{11});
+%       if numwords > 11
+%          sacc(recnum).xres(s_found) = str2double(sac_words{12});
+%          sacc(recnum).yres(s_found) = str2double(sac_words{13});
+%       end
+%       s_found=s_found+1;
+%    end
+%    %find blinks
+%    str_temp = strfind( events{jj}, 'EBLINK');
+%    if str_temp
+%       [blink_words, ~]=proclinec(events{jj});
+%       blink(recnum).eye{b_found} = blink_words{2};
+%       blink(recnum).start(b_found) = str2double(blink_words{3});
+%       blink(recnum).end(b_found) = str2double(blink_words{4});
+%       blink(recnum).dur(b_found) = str2double(blink_words{5});
+%       b_found=b_found+1;
+%    end
 end %jj EVENTS scan loop
 
 
@@ -488,8 +537,10 @@ for z = 1:length(block)
       % h_pix_deg, v_pix_deg, start_timess sacc, fix, blink
       if exist('fix','var'),   extras.fix   = fix(x);   end
       if exist('sacc','var'),  extras.sacc  = sacc(x);  end
-      if exist('blink','var'), extras.blink = blink(x); end
-      if exist('vf','var') && ~isempty(vf)
+      if exist('blink','var') && x <= length(blink)  % if there is more than 1 record, and no blinks in any of the records, then blink is an empty struc and accessing blink(2) causes an error
+		  extras.blink = blink(x);
+      end
+      if exist('vf','var') && x <= length(vf) % ~isempty(vf)
          extras.vf = vf(x);
       else
          extras.vf = [];
