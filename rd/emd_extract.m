@@ -1,45 +1,48 @@
-function emd_extract(emd) % file_or_var)
+function emd_extract(emd_name) % file_or_var)
 
 global dataname samp_freq
 
-if nargin<1
-   % take from structure already in memory
-   varlist = evalin('base','whos');
-   candidate = cell(length(varlist),1);
-   x=0;
-   for i=1:length(varlist)
-      if strcmpi(varlist(i).class, 'emData')
-         x=x+1;
-         candidate{x} = varlist(i).name;
-      end
+if nargin==0,emd_name='';end
+
+% take from structure already in memory
+varlist = evalin('base','whos');
+candidate = cell(length(varlist),1);
+x=0;
+for i=1:length(varlist)
+   if strcmpi(varlist(i).class, 'emData')
+      x=x+1;
+      candidate{x} = varlist(i).name;      
+      if strcmpi(emd_name,varlist(i).name)
+         break
+      end      
    end
-   
-   if x == 0
-      disp('No eye-movement data structures found in memory.')
-      disp('Would you like to load a saved one from disk?')
-      yorn=input('--> ','s');
-      if strcmpi(yorn,'y')
-         [fn, pn] = uigetfile('*.mat','Select an eye movement .mat file');
-         if fn==0,disp('Canceled.');return;end
-         a=load([pn fn]);
-         field_name = cell2mat( fieldnames(a) );
-         emd = eval([ 'a.' field_name] );
-      else
-         return
-      end
-   elseif x==1
-      emd = evalin('base',char(candidate{1}) );
+end
+
+if x == 0
+   disp('No eye-movement data structures found in memory.')
+   disp('Would you like to load a saved one from disk?')
+   yorn=input('--> ','s');
+   if strcmpi(yorn,'y')
+      [fn, pn] = uigetfile('*.mat','Select an eye movement .mat file');
+      if fn==0,disp('Canceled.');return;end
+      a=load([pn fn]);
+      field_name = cell2mat( fieldnames(a) );
+      emd = eval([ 'a.' field_name] );
    else
-      disp('Which eye-movement data do you want to extract?')
-      for i=1:x
-         disp( [num2str(i) ': ' char(candidate{i})] )
-      end
-      j=0;
-      while j<1 || j>x
-         j=input('--> ');
-      end
-      emd = evalin('base',char(candidate{j}) );
+      return
    end
+elseif x==1
+   emd = evalin('base',char(candidate{1}) );
+else
+   disp('Which eye-movement data do you want to extract?')
+   for i=1:x
+      disp( [num2str(i) ': ' char(candidate{i})] )
+   end
+   j=0;
+   while j<1 || j>x
+      j=input('--> ');
+   end
+   emd = evalin('base',char(candidate{j}) );
 end
 
 dataname  = emd.filename;  assignin('base','dataname',dataname);
