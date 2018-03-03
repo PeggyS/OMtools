@@ -146,13 +146,13 @@ for ii = 1:length(msgs)
       ind=ind+1;
       %cfglines(ind) = ii; cfgpos(ind)=k;
       p = strfind( msgs{ii}, '2000');
-      if p, sf(ind) = 2000; sfpos(ind)= p; end
+      if p, sf(ind) = 2000; sfpos(ind)= p(end); end
       p = strfind( msgs{ii}, '1000');
-      if p, sf(ind) = 1000; sfpos(ind)= p; end
+      if p, sf(ind) = 1000; sfpos(ind)= p(end); end
       p = strfind( msgs{ii},  '500');
-      if p, sf(ind) =  500; sfpos(ind)= p; end
+      if p, sf(ind) =  500; sfpos(ind)= p(end); end
       p = strfind( msgs{ii},  '250');
-      if p, sf(ind) =  250; sfpos(ind)= p; end
+      if p, sf(ind) =  250; sfpos(ind)= p(end); end
 
       temp = msgs{ii}(sfpos(ind):end);
       [~, pos_type] = strtok( temp );
