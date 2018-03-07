@@ -71,7 +71,7 @@ end
 
 % create a vector with st, sv as first two entries so that they are calibrated first
 % and therefore available for the other data channels to refer to for the smooth cal
-neworder = [1:chan_count];
+neworder = 1:chan_count;
 if exist('hor_ind','var')
    neworder(hor_ind) = NaN;
 else
@@ -93,7 +93,7 @@ neworder=stripnan(neworder);
 %scalemethod = lower(input('Use old piecewise (l)inear or new (s)mooth scaling? ','s'));
 scalemethod = 'l';
 
-for i = neworder;
+for i = neworder
    if lower(rectype(1)) == 'c' || lower(rectype(1)) == 's'
       newdata(:,i) = newdata(:,i) - z_adj(i);
       newdata(:,i) = newdata(:,i) / c_scale(i);
@@ -131,11 +131,9 @@ for i = neworder;
                % Simplest simple solution: apply old-style cal to a vector of [-lim ... lim]
                % and then pick out the points that have scaled to match the calibration points.
                % Perform the cal here, pass the result to smoothscale and do the real work there.
-               testvect = [mincalpt(i,end) : 0.01 : maxcalpt(i,end)]';
-               
+               testvect = (mincalpt(i,end):0.01:maxcalpt(i,end))';               
                scaled_vect = adj(testvect, 0,...
-                  maxcalpt(i,:), max_adj(i,:), mincalpt(i,:), min_adj(i,:));
-               
+                  maxcalpt(i,:), max_adj(i,:), mincalpt(i,:), min_adj(i,:));               
                newdata(:,i) = smoothscale( scaled_vect, newdata(:,i), z_adj(i),...
                   maxcalpt(i,:), mincalpt(i,:), stim );
             end

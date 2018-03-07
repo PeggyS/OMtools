@@ -4,12 +4,20 @@
 %
 % If there are multiple results, you will be prompted to select the desired
 % file from a displayed list.
+%
+% Currently Mac ONLY, because it uses the OS X shell command 'mdfind'
+% Windows probably would use the WHERE /R command
 
 % Written by: Jonathan Jacobs
-% January 2018
+% January 8 2018
 
 function [pn, fn] = findfilepath(fn, start_dir)
 
+if ~contains(computer,'MAC')
+   disp('Sorry, "findfilepath" is Mac ONLY')
+   pn=[];
+   return
+end
 pn = [];
 
 switch nargin

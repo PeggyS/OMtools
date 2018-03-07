@@ -34,7 +34,6 @@
 
 function success = edf2bin(fn,pn)
 
-success=0;
 curdir = pwd;
 cd(findomtools); cd('rd')
 
@@ -146,13 +145,13 @@ for ii = 1:length(msgs)
       ind=ind+1;
       %cfglines(ind) = ii; cfgpos(ind)=k;
       p = strfind( msgs{ii}, '2000');
-      if p, sf(ind) = 2000; sfpos(ind)= p(end); end
+      if p, sf(ind) = 2000; sfpos(ind)= p; end
       p = strfind( msgs{ii}, '1000');
-      if p, sf(ind) = 1000; sfpos(ind)= p(end); end
+      if p, sf(ind) = 1000; sfpos(ind)= p; end
       p = strfind( msgs{ii},  '500');
-      if p, sf(ind) =  500; sfpos(ind)= p(end); end
+      if p, sf(ind) =  500; sfpos(ind)= p; end
       p = strfind( msgs{ii},  '250');
-      if p, sf(ind) =  250; sfpos(ind)= p(end); end
+      if p, sf(ind) =  250; sfpos(ind)= p; end
 
       temp = msgs{ii}(sfpos(ind):end);
       [~, pos_type] = strtok( temp );
@@ -160,17 +159,13 @@ for ii = 1:length(msgs)
 
       eyes{ind} = 'none';
       % eyes can be encoded either by l,r, or 1,2,3.
-      if strfind(eye_code, '1'), eyes{ind} = 'l'; end
-      if strfind(eye_code, '2'), eyes{ind} = 'r'; end
-      if strfind(eye_code, '3'), eyes{ind} = 'lr'; end
+      if contains(eye_code,'1'), eyes{ind} = 'l'; end
+      if contains(eye_code,'2'), eyes{ind} = 'r'; end
+      if contains(eye_code,'3'), eyes{ind} = 'lr'; end
 
-      if strfind(eye_code, 'LR'), eyes{ind} = 'lr'; end
-      if ~isempty(strfind(eye_code, 'L')) && isempty(strfind(eye_code, 'R'))
-         eyes{ind} = 'l';
-      end
-      if ~isempty(strfind(eye_code, 'R')) && isempty(strfind(eye_code, 'L'))
-         eyes{ind} = 'r';
-      end
+      if contains(eye_code,'L') && ~contains(eye_code,'R'),eyes{ind} = 'l'; end
+      if contains(eye_code,'R') && ~contains(eye_code,'L'),eyes{ind} = 'r'; end
+      if contains(eye_code,'LR'), eyes{ind} = 'lr'; end      
    end % if k
 
    pixres = ~isempty(strfind( msgs{ii},'RES')) && strcmp( msgs{ii}(1:3), 'END' );
@@ -284,6 +279,8 @@ timecol = cell(rawlen,1);
 numcols = zeros(rawlen,1);
 out = cell(rawlen,1);
 
+delete([pn fname '_data.asc'])
+
 for i = 1:rawlen
    temp = raw{i};
    tabs = find(temp == 9);
@@ -356,7 +353,7 @@ for z = 1:length(block)
       disp([ '  Separations at lines: ' mat2str(filestops)] )
       septrials = 'y';
       %septrials = input('  Treat as individual trials? (y/n) ','s');
-      if  strfind( septrials, 'y' )
+      if  contains( septrials, 'y' )
          filestarts = [1; (filestops+1)];
       else
          filestarts = 1;
@@ -498,9 +495,10 @@ for z = 1:length(block)
 
       % look for st,sv data?
       stsv=0;
+      disp(' ')
       yorn=input('Do you want to try to add target data (y/n)? ','s');
       if strcmpi(yorn,'y')
-         [st,sv] = tgt_recon(fname);
+         [st,sv] = tgt_recon([pn fname]);
          if ~isempty(st),dat=cat(1,dat,st);stsv=1;disp('   st data added');end
          if ~isempty(sv),dat=cat(1,dat,sv);stsv=1;disp('   sv data added');end
       end
@@ -525,7 +523,7 @@ disp(' ')
 
 % because why would you record several records, each w/separate sampfreq?
 edfbiasgen(fname,pn,sf(1),files,stsv);
-success=1;
+if nargout==1, success=1; end
 
 disp('If you don''t like the bias file, delete it and recreate it by running')
 disp('"biasgen" yourself. You will need to know the sampling frequency')
