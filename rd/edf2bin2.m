@@ -32,7 +32,7 @@
 %			   Saccades, fixations, blinks, and video frams are also now separated by
 %			   record and saved in the proper _extras.mat file
 
-function success = edf2bin(fn,pn)
+function success = edf2bin2(fn,pn)
 
 curdir = pwd;
 cd(findomtools); cd('rd')
@@ -53,7 +53,6 @@ if nargin<2
    if fn == 0, disp('Aborted.'); return, end
 end
 
-tic
 fname = lower(strtok(fn,'.'));
 
 % stripped_uscore = 0;
@@ -261,10 +260,10 @@ end %jj EVENTS scan loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% now we'll export the samples.
 disp('')
-eval([ '! '  rd_path_str '/edf2asc ' inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN' ] )
+eval([ '! '  rd_path_str '/edf2asc ' inputfile ' ' datafile exp ' -s -t -y -miss NaN' ] )
 disp('EDF to ASCII conversion completed.')
 disp('Importing converted data into MATLAB.  Patience is a virtue.')
-raw = importdata([pn fname '_data.asc'],'\t');
+raw = importdata([pn fname '_data.asc']);
 if isempty(raw)
    disp('No eye movement data found. Aborting')
    return
@@ -276,42 +275,42 @@ cd(curdir)
 % chop off everything after the final tab.  This will remove the non-numeric last coluumn.
 disp('Data successfully loaded.  Converting to numeric values.  Tick tock, tick tock.')
 rawlen = length(raw);
-%numcols = zeros(rawlen,1);
-%datatxt = cell(rawlen,1);
+timecol = cell(rawlen,1);
+numcols = zeros(rawlen,1);
+datatxt = cell(rawlen,1);
 
-%tic
-timecol = raw(:,1);
-data    = raw(:,2:end);
-% for i = 1:rawlen
-%    temp = raw{i};
-%    rawtabs = find(temp == 9);
-%    numcols(i) = length(rawtabs);
-%    timecol{i} = raw{i}(1:rawtabs(1)-1);
-%    rest = raw{i}( rawtabs(1):rawtabs(end) );
-%    tabs = find(rest == 9);   
-%    for j = 1:length(tabs)-1
-%       data(i,j) = str2double( rest(tabs(j)+1:tabs(j+1)) );
-%    end   
-% end
-%toc
+tic
+data = NaN(rawlen,6);
+for i = 1:rawlen
+   temp = raw{i};
+   rawtabs = find(temp == 9);
+   numcols(i) = length(rawtabs);
+   timecol{i} = raw{i}(1:rawtabs(1)-1);
+   rest = raw{i}( rawtabs(1):rawtabs(end) );
+   tabs = find(rest == 9);   
+   for j = 1:length(tabs)-1
+      data(i,j) = str2double( rest(tabs(j)+1:tabs(j+1)) );
+   end   
+end
+toc
 
 % check num of entries in each line, because number of channels
 % can change between subtrials.
-%temp = numcols(1:end-1)-numcols(2:end);
-%chan_chg = find(temp~=0) + 1;
-%if chan_chg
-%   disp(['The number of channels changed following trial(s): ' num2str(chan_chg)])
-%   blockstarts = [1 chan_chg];
-%   blockstops  = [chan_chg-1 rawlen];
-%   block=cell(length(blockstarts));
-%   for j = 1:length(blockstarts)
-%      block{j} = cell2mat(datatxt( blockstarts(j):blockstops(j) ,:));
-%   end
-%else
+temp = numcols(1:end-1)-numcols(2:end);
+chan_chg = find(temp~=0) + 1;
+if chan_chg
+   disp(['The number of channels changed following trial(s): ' num2str(chan_chg)])
+   blockstarts = [1 chan_chg];
+   blockstops  = [chan_chg-1 rawlen];
+   block=cell(length(blockstarts));
+   for j = 1:length(blockstarts)
+      block{j} = cell2mat(datatxt( blockstarts(j):blockstops(j) ,:));
+   end
+else
    block{1} = data;
-  %blockstarts = 1;
-  %blockstops = rawlen;
-%end
+   blockstarts = 1;
+   blockstops = rawlen;
+end
 numblocks=length(block);
 disp('')
 
@@ -334,9 +333,9 @@ for z = 1:length(block)
 
    % use slower str2double because cell2mat chokes when
    % 6-digit time becomes 7-digit time during recording session.
-   %times_str = timecol(blockstarts(z):blockstops(z),1);
+   times_str = timecol(blockstarts(z):blockstops(z),1);
    %t=zeros(size(times_str,1),size(times_str,2));
-   t_el=timecol; %%%str2double(times_str);
+   t_el=str2double(times_str);
    % For multiple records in a single EDF file, there will be gaps in time between
    % each experiment. Use them to separate the experiments.
    tdiff=t_el(2:end) - t_el(1:end-1);
