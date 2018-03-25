@@ -503,7 +503,7 @@ for z = 1:length(block)
       stsv=0;
       disp(' ')
       %yorn=input('Do you want to try to add target data (y/n)? ','s');
-      yorn='y';
+      yorn='n';
       if strcmpi(yorn,'y')
          [st,sv] = tgt_recon([pn fname]);
          if ~isempty(st),dat_out=cat(1,dat_out,st);stsv=1;disp('   st data added');end
