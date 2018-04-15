@@ -1,4 +1,4 @@
-function emd_extract(emd_name) % file_or_var)
+function emd_extract(emd_name)
 
 global dataname samp_freq
 
@@ -34,19 +34,30 @@ if x == 0
 elseif x==1
    emd = evalin('base',char(candidate{1}) );
 else
-   disp('Which eye-movement data do you want to extract?')
+   curr_name = strtok(emd_name,'.');
+   match=0;
    for i=1:x
-      disp( [num2str(i) ': ' char(candidate{i})] )
+      if strcmp(curr_name,char(candidate{i}))
+         match=i;
+         break
+      end
    end
-   j=0;
-   while j<1 || j>x
-      j=input('--> ');
+   if ~match
+      for i=1:x
+         disp( [num2str(i) ': ' char(candidate{i})] )
+      end
+      disp('Which eye-movement data do you want to extract?')
+      while match<1 || match>x
+         match=input('--> ');
+      end
    end
-   emd = evalin('base',char(candidate{j}) );
+   emd = evalin('base',char(candidate{match}) );
 end
 
 dataname  = emd.filename;  assignin('base','dataname',dataname);
 samp_freq = emd.samp_freq; assignin('base','samp_freq',samp_freq);
+numsamps  = emd.numsamps;  
+t = (1:numsamps)/samp_freq;assignin('base','t',t');
 
 if ~isempty(emd.start_times)
    global start_times %#ok<*TLEV>
@@ -54,7 +65,7 @@ if ~isempty(emd.start_times)
    assignin('base','start_times',start_times);
 end
 
-disp('Channels saved to base workspace: ')
+disp([emd_name ': channels saved to base workspace: '])
 
 if ~isempty(emd.rh.data)
    global rh;  rh =emd.rh.data; assignin('base','rh',rh); 
@@ -68,12 +79,12 @@ if ~isempty(emd.lh.data)
 end
 if ~isempty(emd.rv.data)
    global rv;  rv =emd.rv.data; assignin('base','rv',rv); 
-   global rvv; rhv=emd.rv.vel;  assignin('base','rvv',rvv); 
+   global rvv; rvv=emd.rv.vel;  assignin('base','rvv',rvv); 
    disp([sprintf('\b'),' rv']);
 end
 if ~isempty(emd.lv.data)
    global lv;  lv =emd.lv.data; assignin('base','lv',lv); 
-   global lvv; lhv=emd.lv.vel;  assignin('base','lvv',lvv); 
+   global lvv; lvv=emd.lv.vel;  assignin('base','lvv',lvv); 
    disp([sprintf('\b'),' lv']);
 end
 if ~isempty(emd.rt.data)
@@ -83,7 +94,7 @@ if ~isempty(emd.rt.data)
 end
 if ~isempty(emd.lt.data)
    global lt;  lt =emd.lt.data; assignin('base','lt',lt); 
-   global ltv; lhv=emd.lt.vel;  assignin('base','ltv',ltv); 
+   global ltv; ltv=emd.lt.vel;  assignin('base','ltv',ltv); 
    disp([sprintf('\b'),' lt']);
 end
 if ~isempty(emd.st.data)

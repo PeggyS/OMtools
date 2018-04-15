@@ -275,7 +275,7 @@ cd(curdir)
 
 % chop off everything after the final tab.  This will remove the non-numeric last coluumn.
 disp('Data successfully loaded.  Converting to numeric values.  Tick tock, tick tock.')
-rawlen = length(raw);
+%rawlen = length(raw);
 %numcols = zeros(rawlen,1);
 %datatxt = cell(rawlen,1);
 
@@ -503,7 +503,7 @@ for z = 1:length(block)
       stsv=0;
       disp(' ')
       %yorn=input('Do you want to try to add target data (y/n)? ','s');
-      yorn='n';
+      yorn='y';
       if strcmpi(yorn,'y')
          [st,sv] = tgt_recon([pn fname]);
          if ~isempty(st),dat_out=cat(1,dat_out,st);stsv=1;disp('   st data added');end
@@ -516,7 +516,7 @@ for z = 1:length(block)
       fid = fopen([temp{x} '.bin'], 'w', 'n');
       fwrite(fid, dat_out, 'float');
       fclose(fid);
-      disp(['  Saved as ' pn temp{x} '.bin' ])
+      disp(['Data saved as ' pn temp{x} '.bin' ])
    end
    files = files + length(filestops);
 end % for z

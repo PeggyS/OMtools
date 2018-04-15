@@ -8,6 +8,7 @@ classdef emData
       filename = '';
       pathname = '';
       comments = '';
+      chan_names = {};
       %iscalibrated=0;
       vframes = [];
       calibrations = [];
