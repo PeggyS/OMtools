@@ -2,7 +2,7 @@ function seriesname = getseriesname(shortname)
 
 seriesname = shortname;
 if ~isempty(strfind(shortname,'_'))
-   seriesname=strtok(shortname,'_');
+   seriesname=[strtok(shortname,'_') '_'];
 end
 
 while isdigit(seriesname(end))

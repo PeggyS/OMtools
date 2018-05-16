@@ -32,6 +32,9 @@
 % tempSampFreq is read directly from file header for labview, ober and rtrv files
 
 %tempfname=shortname;
+function [adj_fname,adjbiasvals] = getbias(filename,samp_freq)
+
+[shortname,~] = strtok(filename,'.');
 seriesname = getseriesname(shortname);
 
 numcand = 0;
@@ -41,7 +44,7 @@ numfiles = length(adjlist);
 for j = 1:numfiles
    adjfilename = adjlist(j).name;
    adjfilename = strtok(adjfilename,'.');
-   [temp,adjfilename] = strtok(adjfilename,'_');
+   [~,adjfilename] = strtok(adjfilename,'_');
    adjfilename = adjfilename(2:end);
    
    if strfind( lower(shortname),lower(adjfilename) ) == 1
@@ -50,7 +53,7 @@ for j = 1:numfiles
    end
 end
 
-[r,c]=size(adj_cand);
+[~,c]=size(adj_cand);
 if c==1
    adj_fname = adj_cand{1};
 else
@@ -74,4 +77,4 @@ else
          adj_fname = biasgen(seriesname);
    end
 end
-adjbiasvals = readbias(adj_fname,filename);
+adjbiasvals = readbias(adj_fname,filename,samp_freq);

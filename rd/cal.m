@@ -60,7 +60,7 @@ tempFigColor = get(tempFigH,'color');
 if tempFigColor(1) >= 0.8
    lhColor = 'g';
    rhColor = 'b';
-elseif tempFigColor(1) == 0;
+elseif tempFigColor(1) == 0
    lhColor = 'y';
    rhColor = 'c';
 else
@@ -254,7 +254,7 @@ while i <= numcalpts+1
       set(plotH, 'Ydata', displayData);
       autorange_y(calaxis)
       
-      rAbrtFlag = 0; rSkipFlag = 0;
+      rSkipFlag = 0;
       xyCur1Mat = []; xyCur1Ctr = 0;
       cursmatr('cur1_clr')
       disp( ' ' )
@@ -267,8 +267,7 @@ while i <= numcalpts+1
       commandwindow
       temp=input( '--> ' , 's');
       if strcmp(temp,'q'), return; end
-      %if strcmp(temp,'x'), rAbrtFlag = 1; break; end
-      if strcmp(temp,'s'), rSkipFlag = 1; break; end
+      if strcmp(temp,'s'), rSkipFlag = 1; end
       if strcmp(temp,'n')
          temp=input('Enter a replacement calibration value: ','s');
          max_cal(i)=str2double(temp);
@@ -279,13 +278,13 @@ while i <= numcalpts+1
       maxScaledData(maxScalePts) = maxUpdatedData(maxScalePts);
       restOfTheData(restPts)		= maxUpdatedData(restPts);
       
-      if rAbrtFlag, numMaxCalpts=i-1; i=numcalpts+2; return; end % prob need min_cal_line stuff here, as below
+      %if rAbrtFlag, numMaxCalpts=i-1; i=numcalpts+2; return; end % prob need min_cal_line stuff here, as below
       if rSkipFlag
          max_scale(i) = 1; maxScaleIndex(i) = NaN;
          max_cal_line(i) = line([0 max(t)],[NaN NaN]);
          set(max_cal_line(i),'Color',[0.6 0.6 0.6]);
          set(max_cal_line(i),'LineStyle','-.');
-         break;
+         break
       end
       
       backedupData = displayData;
@@ -328,6 +327,9 @@ while i <= numcalpts+1
       max_cal_time(i-1) = maxScaleIndex(i)/samp_freq(1);
       disp(['Scaling factor for ' num2str(max_cal(i))	 ' deg (' dir1str ') is: ' num2str(max_scale(i)) ...
          '	 Time index: ' num2str( max_cal_time(i-1) )])
+   else
+      maxScaleIndex(i)  = NaN;
+      max_cal_time(i-1) = NaN;
    end
    i=i+1;
    
@@ -395,7 +397,8 @@ while i <= numcalpts+1
       set(plotH, 'Ydata', displayData);
       autorange_y(calaxis)
       
-      lAbrtFlag = 0; lSkipFlag=0;
+      %lAbrtFlag = 0; 
+      lSkipFlag=0;
       xyCur1Mat = []; xyCur1Ctr = 0;
       cursmatr('cur1_clr')
       disp( ' ' )
@@ -408,8 +411,7 @@ while i <= numcalpts+1
       commandwindow
       temp=input('--> ','s');
       if strcmp(temp,'q'), return; end
-      %if strcmp(temp,'x'), lAbrtFlag = 1; break; end
-      if strcmp(temp,'s'), lSkipFlag = 1; break; end
+      if strcmp(temp,'s'), lSkipFlag = 1; end
       if strcmp(temp,'n')
          temp=input('Enter a replacement calibration value: ','s');
          min_cal(i)=str2double(temp);
@@ -420,7 +422,7 @@ while i <= numcalpts+1
       minScaledData(minScalePts) = minUpdatedData(minScalePts);
       restOfTheData(restPts)	   = minUpdatedData(restPts);
       
-      if lAbrtFlag, numLcalpts=i-1; i=numcalpts+2; return; end % prob need min_cal_line stuff here, as below
+      %if lAbrtFlag, numLcalpts=i-1; i=numcalpts+2; return; end % prob need min_cal_line stuff here, as below
       if lSkipFlag
          min_scale(i) = 1; minScaleIndex(i) = NaN;
          min_cal_line(i) = line([0 max(t)],[NaN NaN]);
@@ -473,10 +475,13 @@ while i <= numcalpts+1
       min_cal_time(i-1) = minScaleIndex(i)/samp_freq(1);
       disp(['Scaling factor for ' num2str(min_cal(i)) ' ' dir2str ' is: ' num2str(min_scale(i)) ...
          '	 Time index: ' num2str( min_cal_time(i-1) )])
+   else
+      minScaleIndex(i)  = NaN;
+      min_cal_time(i-1) = NaN;
    end
    i=i+1;
    
-end
+end %while i
 
 %negDataFinal = displayData(negPts);  %% unneeded.
 
