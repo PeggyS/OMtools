@@ -49,7 +49,7 @@ end
 try cd(curdir); catch, cd(matlabroot); end
 
 if nargin<2
-   [fn, pn]=uigetfile({'*.edf'}, 'Select an EDF file to load');
+   [fn, pn]=uigetfile({'*.edf; *.EDF'}, 'Select an EDF file to load');
    if fn == 0, disp('Aborted.'); return, end
 end
 
