@@ -1,8 +1,13 @@
 function seriesname = getseriesname(shortname)
 
 us=strfind(shortname,'_');
-lastus = us(end);
 
+if isempty(us)
+	seriesname = shortname;
+	return
+end
+
+lastus = us(end);
 if lastus>1
    if isdigit(shortname(lastus+1))
       seriesname=[shortname(1:us(end)) '_'];
