@@ -1,8 +1,8 @@
 function seriesname = getseriesname(shortname)
 
 seriesname = shortname;
-if contains(shortname,'_')
-   seriesname=[strtok(shortname,'_') '_'];
+if ~isempty(strfind(shortname,'_'))
+   seriesname=strtok(shortname,'_');
 end
 
 while isdigit(seriesname(end))

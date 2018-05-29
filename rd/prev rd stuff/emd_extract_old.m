@@ -65,60 +65,60 @@ if ~isempty(emd.start_times)
    assignin('base','start_times',start_times);
 end
 
-disp([emd_name ': Channels saved to base workspace: '])
+disp([emd_name ': channels saved to base workspace: '])
 
-if ~isempty(emd.rh.pos)
-   global rh;  rh =emd.rh.pos; assignin('base','rh',rh); 
-   global rhv; rhv=d2pt(emd.rh.pos,3,samp_freq); assignin('base','rhv',rhv); 
+if ~isempty(emd.rh.data)
+   global rh;  rh =emd.rh.data; assignin('base','rh',rh); 
+   global rhv; rhv=d2pt(emd.rh.data,3,samp_freq); assignin('base','rhv',rhv); 
    disp([sprintf('\b'),' rh']);
 end
-if ~isempty(emd.lh.pos)
-   global lh;  lh =emd.lh.pos; assignin('base','lh',lh); 
-   global lhv; lhv=d2pt(emd.lh.pos,3,samp_freq); assignin('base','lhv',lhv); 
+if ~isempty(emd.lh.data)
+   global lh;  lh =emd.lh.data; assignin('base','lh',lh); 
+   global lhv; lhv=d2pt(emd.lh.data,3,samp_freq); assignin('base','lhv',lhv); 
    disp([sprintf('\b'),' lh']);
 end
-if ~isempty(emd.rv.pos)
-   global rv;  rv =emd.rv.pos; assignin('base','rv',rv); 
-   global rvv; rvv=d2pt(emd.rv.pos,3,samp_freq); assignin('base','rvv',rvv); 
+if ~isempty(emd.rv.data)
+   global rv;  rv =emd.rv.data; assignin('base','rv',rv); 
+   global rvv; rvv=d2pt(emd.rv.data,3,samp_freq); assignin('base','rvv',rvv); 
    disp([sprintf('\b'),' rv']);
 end
-if ~isempty(emd.lv.pos)
-   global lv;  lv =emd.lv.pos; assignin('base','lv',lv); 
-   global lvv; lvv=d2pt(emd.lv.pos,3,samp_freq); assignin('base','lvv',lvv); 
+if ~isempty(emd.lv.data)
+   global lv;  lv =emd.lv.data; assignin('base','lv',lv); 
+   global lvv; lvv=d2pt(emd.lv.data,3,samp_freq); assignin('base','lvv',lvv); 
    disp([sprintf('\b'),' lv']);
 end
-if ~isempty(emd.rt.pos)
-   global rt;  rt =emd.rt.pos; assignin('base','rt',rt); 
-   global rtv; rtv=d2pt(emd.rt.pos,3,samp_freq); assignin('base','rtv',rtv); 
+if ~isempty(emd.rt.data)
+   global rt;  rt =emd.rt.data; assignin('base','rt',rt); 
+   global rtv; rtv=d2pt(emd.rt.data,3,samp_freq); assignin('base','rtv',rtv); 
    disp([sprintf('\b'),' rt']);
 end
-if ~isempty(emd.lt.pos)
-   global lt;  lt =emd.lt.pos; assignin('base','lt',lt); 
-   global ltv; ltv=d2pt(emd.lt.pos,3,samp_freq); assignin('base','ltv',ltv); 
+if ~isempty(emd.lt.data)
+   global lt;  lt =emd.lt.data; assignin('base','lt',lt); 
+   global ltv; ltv=d2pt(emd.lt.data,3,samp_freq); assignin('base','ltv',ltv); 
    disp([sprintf('\b'),' lt']);
 end
-if ~isempty(emd.st.pos)
-   global st; st=emd.st.pos; assignin('base','st',st); 
+if ~isempty(emd.st.data)
+   global st; st=emd.st.data; assignin('base','st',st); 
    disp([sprintf('\b'),' st']);
 end
-if ~isempty(emd.sv.pos)
-   global sv; sv=emd.sv.pos; assignin('base','sv',sv); 
+if ~isempty(emd.sv.data)
+   global sv; sv=emd.sv.data; assignin('base','sv',sv); 
    disp([sprintf('\b'),' sv']);
 end
-if ~isempty(emd.ds.pos)
-   global ds; ds=emd.ds.pos; assignin('base','ds',ds); 
+if ~isempty(emd.ds.data)
+   global ds; ds=emd.ds.data; assignin('base','ds',ds); 
    disp([sprintf('\b'),' ds']);
 end
-if ~isempty(emd.tl.pos)
-   global tl; tl=emd.tl.pos; assignin('base','tl',tl); 
+if ~isempty(emd.tl.data)
+   global tl; tl=emd.tl.data; assignin('base','tl',tl); 
    disp([sprintf('\b'),' tl']);
 end
-if ~isempty(emd.hh.pos)
-   global hh; hh=emd.hh.pos; assignin('base','hh',hh); 
+if ~isempty(emd.hh.data)
+   global hh; hh=emd.hh.data; assignin('base','hh',hh); 
    disp([sprintf('\b'),' hh']);
 end
-if ~isempty(emd.hv.pos)
-   global hv; hv=emd.hv.pos; assignin('base','hv',hv); 
+if ~isempty(emd.hv.data)
+   global hv; hv=emd.hv.data; assignin('base','hv',hv); 
    disp([sprintf('\b'),' hv']);
 end
 

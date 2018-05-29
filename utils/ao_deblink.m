@@ -3,7 +3,7 @@
 % Usage: out = ao_deblink( in, spread, width )
 % where 'in' is pos data (e.g., lh). This is the only REQUIRED ARGUMENT
 % where 'spread' is the STD of the data's range considered good (def = 3)
-%       'width' is how many msec to remove before/after a blink (def = 75)
+%       'width' is how many msec to remove before/after a blink (def = 250)
 %
 % What could go wrong? I am assuming a close-enough-to-normal distribution
 % of eye-movement position data (for generous values of "close enough"). 
@@ -14,11 +14,11 @@
 % written by: Jonathan Jacobs  Nov 2016
 % last mod: 11/11/16
 
-function pos=ao_deblink(pos, spread, width)
+function pos_d=ao_deblink(pos, spread, width)
 
 global samp_freq
 
-if nargin<2, spread = 3; width = 75; end
+if nargin<2, spread = 1.125; width = 250; end
 
 width = fix(width/1000 * samp_freq);  % convert from milliseconds to samples.
 npts = length(pos);
@@ -47,6 +47,9 @@ acc_hi_lim = max(acc_hi_lim, min_acc_hi_lim);
 acc_lo_lim = mu_acc - spread*sig_acc; 
 acc_lo_lim = min(acc_lo_lim, min_acc_lo_lim);
 
+% bad_pos = find( pos < min_pos_lo_lim | pos > min_pos_hi_lim );
+% bad_vel = find( vel < min_vel_lo_lim | vel > min_vel_hi_lim );
+% bad_acc = find( acc < min_acc_lo_lim | acc > min_acc_hi_lim );
 bad_pos = find( pos < pos_lo_lim | pos > pos_hi_lim );
 bad_vel = find( vel < vel_lo_lim | vel > vel_hi_lim );
 bad_acc = find( acc < acc_lo_lim | acc > acc_hi_lim );
@@ -55,11 +58,12 @@ bad_acc = find( acc < acc_lo_lim | acc > acc_hi_lim );
 bad_pts = union(bad_pos, bad_vel);
 bad_pts = union(bad_pts, bad_acc);
 
-% and then spread
-for i = width
-    bad_pts = union(bad_pts, bad_pts+i);
-    bad_pts = union(bad_pts, bad_pts-i);
+% and then spread to catch points on either side
+pos_d = pos;
+temp=bad_pts(diff(bad_pts)>1);
+bp_seps=[temp;bad_pts(end)];
+for i = 1:length(bp_seps)
+   plug = bp_seps(i)-width:bp_seps(i)+width; 
+   x = plug(plug>0 & plug<npts);
+   pos_d(x)=NaN;
 end
-
-bad_pts = bad_pts( find(bad_pts>0 | bad_pts<npts) );
-pos(bad_pts)=NaN;
