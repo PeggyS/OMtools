@@ -41,6 +41,13 @@ seriesname = getseriesname(shortname);
 
 numcand = 0;
 adjlist = dir('adjbias*');
+if isempty(adjlist)
+   disp('No bias available')
+   adj_fname=[];
+   adjbiasvals=[];
+   return
+end
+
 numfiles = length(adjlist);
 adj_cand = cell(numfiles);
 orig_adjbiasname=[];
