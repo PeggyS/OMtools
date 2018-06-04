@@ -32,7 +32,7 @@
 %			   Saccades, fixations, blinks, and video frams are also now separated by
 %			   record and saved in the proper _extras.mat file
 
-function success = edf2bin(fn,pn)
+function numfiles = edf2bin(fn,pn)
 
 curdir = pwd;
 cd(findomtools); cd('rd')
@@ -533,7 +533,8 @@ toc
 
 % because why would you record several records, each w/separate sampfreq?
 edfbiasgen(fname,pn,sf(1),files,stsv);
-if nargout==1, success=1; end
+numfiles = files;
+if nargout<1, clear numfiles; end
 
 disp('If you don''t like the bias file, delete it and recreate it by running')
 disp('"biasgen" yourself. You will need to know the sampling frequency')
