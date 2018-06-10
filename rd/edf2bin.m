@@ -63,15 +63,15 @@ subjstr=fname;
 %     stripped_uscore = 1;
 % end
 
-inputfile = ['''' pn fn ''''];
-msgsfile =  ['''' pn fname '_msgs' ''''];
-datafile =  ['''' pn fname '_data' ''''];
-eventfile = ['''' pn fname '_events' ''''];
+inputfile = ['' pn fn ''];
+msgsfile =  ['' pn fname '_msgs' ''];
+datafile =  ['' pn fname '_data' ''];
+eventfile = ['' pn fname '_events' ''];
 
 % for scenelink info edf2asc must be called in the same folder that also
 % has the *.ett file. That's just edf2asc.
 cd(findomtools); cd('rd')
-rd_path_str = pwd;  % the path to rd so we know how to call edf2asc
+rd_path_str = [pwd filesep];  % the path to rd so we know how to call edf2asc
 cd(pn)
 
 % disp('')
@@ -101,8 +101,15 @@ end
 % This is what an entry looks like:  MSG	3964147 RECCFG CR 1000 2 1 LR
 % eval( [ '! ./edf2asc ' inputfile ' ' msgsfile '  -neye -ns -y ' ] )
 % eval( [ '! ./edf2asc ' inputfile ' ' eventfile '  -nmsg -ns -y ' ] )
-eval( [ '! ' rd_path_str '/edf2asc ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y ' ] );
-eval( [ '! ' rd_path_str '/edf2asc ' inputfile ' ' eventfile exp ' -nmsg -ns -y ' ] );
+a=[rd_path_str 'edf2asc ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
+system(a);
+a=[rd_path_str 'edf2asc ' inputfile ' ' eventfile exp ' -nmsg -ns -y '];
+system(a);
+% if ismac
+%    eval( [ '! ' rd_path_str 'edf2asc ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y ' ] );
+%    eval( [ '! ' rd_path_str 'edf2asc ' inputfile ' ' eventfile exp ' -nmsg -ns -y ' ] );
+% elseif ispc
+% end
 disp('EDF messages exported.')
 disp('Searching for channel and frequency information.')
 
@@ -261,7 +268,7 @@ end %jj EVENTS scan loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% now we'll export the samples.
 disp('')
-eval([ '! '  rd_path_str '/edf2asc ' inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN' ] )
+eval([ '! '  rd_path_str 'edf2asc ' inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN' ] )
 disp('EDF to ASCII conversion completed.')
 disp('Importing converted data into MATLAB.  Patience is a virtue.')
 raw = importdata([pn fname '_data.asc'],'\t');

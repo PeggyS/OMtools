@@ -1,9 +1,11 @@
-function addfocus2%(hFig)
+function addfocus_uifig %(hFig)
+
+uifigure('Name','focus figure',);
 
 %temp = matlab.internal.webwindowmanager.instance.windowList;
 webWindows = matlab.internal.webwindowmanager.instance.windowList;
 for i=1:length(webWindows)
-   if strcmp(webWindows(i).Title,'Findsaccs control')
+   if strcmp(webWindows(i).Title,'focus figure')
       win = webWindows(i);
       break
    end
