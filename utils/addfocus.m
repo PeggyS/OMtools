@@ -1,12 +1,15 @@
 function addfocus(whatfig,fn_name)
 
-% for demo mode
-% Prepare the figure
 if nargin==0
-   hFig = figure;  % etc. - prepare the figure
+   % demo mode. create test focus window
+   if (0), hFig = figure;   %#ok<*UNRCH>
+   else,   hFig = uifigure; pause(0.1); % SLOOOOOOOW... wait for it to be registered 
+   end
    hFig.Name = 'focustest';
-   fn_name='ftest_gui'; %eg 'nafx_gui' name of the caller function
+   figname = hFig.Name;
+   fn_name='ftest_act'; %eg 'nafx_gui' name of the caller function
 else
+   % use specified window, can specify by either handle or Tag string
    if ishandle(whatfig)
       hFig=whatfig;
       figname = hFig.Name;
@@ -19,70 +22,51 @@ end
 % Get the underlying Java reference
 warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 jFig = get(hFig, 'JavaFrame');
+
 if ~isempty(jFig)
-   % this branch gets used
-   
+   % for old-style figures   
    jAxis = jFig.getAxisComponent;
    
-   % Set the focus event callback
-   %fname is 3rd arg in receiving funct
-   set(jAxis.getComponent(0), 'FocusGainedCallback',{@myMatlabFunc,fn_name});
-   set(jAxis.getComponent(0), 'FocusLostCallback',  {@myMatlabFunc,fn_name});
+   % Set the event callbacks (fname is 3rd arg in receiving funct)
+   set(jAxis.getComponent(0), ...
+      'FocusGainedCallback',{@myMatlabFunc,fn_name,'gained'});
+   set(jAxis.getComponent(0), ...
+      'FocusLostCallback',  {@myMatlabFunc,fn_name,'lost'});
    
 else
-   %%%%% unclean? unclean?
-   % haven't seen this used
-   %temp = matlab.internal.webwindowmanager.instance.windowList;
-   Beeper;Beeper;Beeper;
-   disp('this might be important: addfocus if jJig is empty')
-   keyboard
+   % for UIFIGURE.
    webWindows = matlab.internal.webwindowmanager.instance.windowList;
+   found=0;
    for i=1:length(webWindows)
       if strcmp(webWindows(i).Title,figname)
          win = webWindows(i);
+         found=1;
          break
       end
    end
-   
-   %%% create myMatlabF
-   win.FocusGained = {@myMatlabFunc2};%,hFig};
-   win.FocusLost   = {@myMatlabFunc3};%,hFig};
-   %win.FocusGained = {@myMatlabFunc2,hFig};
-   %win.FocusLost   = {@myMatlabFunc3,hFig};
+   if found
+      win.FocusGained = {@myMatlabFunc,fn_name,'gained'};
+      win.FocusLost   = {@myMatlabFunc,fn_name,'lost'};
+   else
+      disp('Could not find UIFIGURE window')
+      return
+   end
    
 end
 end % function
 
 
-function myMatlabFunc(~, jEventData, fnname) %,arg4,arg5)
+function myMatlabFunc(jAxis, jEventData, fn_name,gorl) %#ok<INUSL>
 % do whatever you wish with the event/hFig information
-if contains(char(jEventData),'FOCUS_GAINED')
-   %disp('focus gained')
+if contains(gorl,'gained')
+   %if contains(char(jEventData),'FOCUS_GAINED')
    focusgained = 'focusgained';
-   cmdname = [fnname '(' focusgained ');'];
-elseif contains(char(jEventData),'FOCUS_LOST')
-   %disp('focus lost')
+   cmdname = [fn_name '(' focusgained ');'];
+elseif contains(gorl,'lost')
+   %elseif contains(char(jEventData),'FOCUS_LOST')
    focuslost = 'focuslost';
-   cmdname = [fnname '(' focuslost ');'];
+   cmdname = [fn_name '(' focuslost ');'];
 end
-%disp(cmdname)
 eval(cmdname)
 end
-
-
-
-% have these been used lately?
-function myMatlabFunc3(a,b)%,hFig)  %%don't sweat the a,b. can't do anything about it.
-% do whatever you wish with the event/hFig information
-disp('focus lost')
-keyboard
-end
-function myMatlabFunc2(a,b)%,hFig)
-% do whatever you wish with the event/hFig information
-disp('focus')
-keyboard
-end
-
-%%%%%
-%%%%% back to the clean...
 

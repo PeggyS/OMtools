@@ -14,15 +14,29 @@
 % written by: Jonathan Jacobs  Nov 2016
 % last mod: 11/11/16
 
-function pos_d=ao_deblink(pos, spread, width)
+function pos_d=ao_deblink(pos, spread, inpSF)
 
 global samp_freq
 
-if nargin<2, spread = 1.125; width = 250; end
+if nargin<3 || isempty( inpSF )
+   if isempty(samp_freq) || samp_freq==0
+      samp_freq = input('Enter the sampling frequency: ');
+   end
+else
+   samp_freq=inpSF;
+end
 
-width = fix(width/1000 * samp_freq);  % convert from milliseconds to samples.
-npts = length(pos);
-vel = d2pt(pos,2); acc = d2pt(vel,2);
+if nargin<2
+   spread = 1.125;
+   %pre_width  = 250;  % width in msec
+   %post_width = 250;
+end  
+
+%pre_width  = fix(samp_freq*pre_width/1000);  % convert from milliseconds to samples.
+%post_width = fix(samp_freq*post_width/1000);
+%poslen = length(pos);
+vel = d2pt(pos,2,samp_freq); 
+acc = d2pt(vel,2,samp_freq);
 
 % assume normal distribution
 [mu_pos, sig_pos]=normfit(pos);
@@ -30,9 +44,9 @@ vel = d2pt(pos,2); acc = d2pt(vel,2);
 [mu_acc, sig_acc]=normfit(acc);
 
 % upper/lower limits for actual eye-movement data
-min_pos_hi_lim = 40; min_pos_lo_lim = -40;
-min_vel_hi_lim = 400; min_vel_lo_lim = -400;
-min_acc_hi_lim = 4000; min_acc_lo_lim = -4000;
+min_pos_hi_lim =   40;   min_pos_lo_lim =    -40;
+min_vel_hi_lim =  2500;  min_vel_lo_lim =  -2500;
+min_acc_hi_lim = 15000;  min_acc_lo_lim = -15000;
 
 pos_hi_lim = mu_pos + spread*sig_pos; 
 pos_hi_lim = max(pos_hi_lim, min_pos_hi_lim);
@@ -47,23 +61,49 @@ acc_hi_lim = max(acc_hi_lim, min_acc_hi_lim);
 acc_lo_lim = mu_acc - spread*sig_acc; 
 acc_lo_lim = min(acc_lo_lim, min_acc_lo_lim);
 
-% bad_pos = find( pos < min_pos_lo_lim | pos > min_pos_hi_lim );
-% bad_vel = find( vel < min_vel_lo_lim | vel > min_vel_hi_lim );
-% bad_acc = find( acc < min_acc_lo_lim | acc > min_acc_hi_lim );
-bad_pos = find( pos < pos_lo_lim | pos > pos_hi_lim );
-bad_vel = find( vel < vel_lo_lim | vel > vel_hi_lim );
-bad_acc = find( acc < acc_lo_lim | acc > acc_hi_lim );
+pos_d = pos; %posfig=figure;plot(pos_d);hold on
+%vel_d = vel; %velfig=figure;plot(vel_d);hold on
+%acc_d = acc; %accfig=figure;plot(acc_d);hold on
 
+bad_pos = find( pos<pos_lo_lim | pos>pos_hi_lim ); 
+pos_d(bad_pos)=NaN; %#ok<*FNDSB>
+%vel_d(bad_pos)=NaN;
+%acc_d(bad_pos)=NaN;
+%figure(posfig);plot(pos_d,'g')
+%figure(velfig);plot(vel_d,'g')
+%figure(accfig);plot(acc_d,'g')
+
+bad_vel = find( vel<vel_lo_lim | vel>vel_hi_lim ); 
+pos_d(bad_vel)=NaN;
+%vel_d(bad_vel)=NaN;
+%acc_d(bad_vel)=NaN;
+%figure(posfig);plot(pos_d,'r')
+%figure(velfig);plot(vel_d,'r')
+%figure(accfig);plot(acc_d,'r')
+
+bad_acc = find( acc<acc_lo_lim | acc>acc_hi_lim ); 
+pos_d(bad_acc)=NaN;
+%vel_d(bad_acc)=NaN;
+%acc_d(bad_vel)=NaN;
+%figure(posfig);plot(pos_d,'m')
+%figure(velfig);plot(vel_d,'m')
+%figure(accfig);plot(acc_d,'m')
+
+
+% for now(?), disable the spread feature
 % all points that meet exclusion criteria
-bad_pts = union(bad_pos, bad_vel);
-bad_pts = union(bad_pts, bad_acc);
+%bad_pts = union(bad_pos, bad_vel);
+%bad_pts = union(bad_pts, bad_acc);
 
-% and then spread to catch points on either side
-pos_d = pos;
-temp=bad_pts(diff(bad_pts)>1);
-bp_seps=[temp;bad_pts(end)];
-for i = 1:length(bp_seps)
-   plug = bp_seps(i)-width:bp_seps(i)+width; 
-   x = plug(plug>0 & plug<npts);
-   pos_d(x)=NaN;
-end
+% % and then spread to catch points on either side
+% bp2 = [bad_pts(1); bad_pts];
+% bp1 = [bad_pts; bad_pts(end)];
+% temp = abs(bp2-bp1);
+% bp_seps = bad_pts(find(temp>1)); %#ok<FNDSB>
+% for i = 1:length(bp_seps)
+%    plug = (bp_seps(i)-pre_width):(bp_seps(i)+post_width); 
+%    x = plug(plug>0 & plug<poslen);
+%    pos_d(x)=NaN;
+% end
+
+end %function

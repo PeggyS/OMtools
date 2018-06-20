@@ -1,4 +1,4 @@
-function ftest_gui(gorl)
+function ftest_act(gorl)
 
 % do whatever you wish with the event/hFig information
 if contains(gorl,'gained')
