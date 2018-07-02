@@ -42,8 +42,8 @@ seriesname = getseriesname(shortname);
 numcand = 0;
 adjlist = dir('adjbias*');
 if isempty(adjlist)
-   disp('No bias available')
-   adj_fname=[];
+   disp('No bias file available!')
+   adj_fname='no adjbias file found';
    adjbiasvals=[];
    return
 end

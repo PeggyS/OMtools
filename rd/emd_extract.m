@@ -67,57 +67,57 @@ end
 
 disp([emd_name ': Channels saved to base workspace: '])
 
-if ~isempty(emd.rh.pos)
+if ~isempty(emd.rh.pos) && ~all(isnan(emd.rh.pos))
    global rh;  rh =emd.rh.pos; assignin('base','rh',rh); 
    global rhv; rhv=d2pt(emd.rh.pos,3,samp_freq); assignin('base','rhv',rhv); 
    disp([sprintf('\b'),' rh']);
 end
-if ~isempty(emd.lh.pos)
+if ~isempty(emd.lh.pos) && ~all(isnan(emd.lh.pos))
    global lh;  lh =emd.lh.pos; assignin('base','lh',lh); 
    global lhv; lhv=d2pt(emd.lh.pos,3,samp_freq); assignin('base','lhv',lhv); 
    disp([sprintf('\b'),' lh']);
 end
-if ~isempty(emd.rv.pos)
+if ~isempty(emd.rv.pos) && ~all(isnan(emd.rv.pos))
    global rv;  rv =emd.rv.pos; assignin('base','rv',rv); 
    global rvv; rvv=d2pt(emd.rv.pos,3,samp_freq); assignin('base','rvv',rvv); 
    disp([sprintf('\b'),' rv']);
 end
-if ~isempty(emd.lv.pos)
+if ~isempty(emd.lv.pos) && ~all(isnan(emd.lv.pos))
    global lv;  lv =emd.lv.pos; assignin('base','lv',lv); 
    global lvv; lvv=d2pt(emd.lv.pos,3,samp_freq); assignin('base','lvv',lvv); 
    disp([sprintf('\b'),' lv']);
 end
-if ~isempty(emd.rt.pos)
+if ~isempty(emd.rt.pos) && ~all(isnan(emd.rt.pos))
    global rt;  rt =emd.rt.pos; assignin('base','rt',rt); 
    global rtv; rtv=d2pt(emd.rt.pos,3,samp_freq); assignin('base','rtv',rtv); 
    disp([sprintf('\b'),' rt']);
 end
-if ~isempty(emd.lt.pos)
+if ~isempty(emd.lt.pos) && ~all(isnan(emd.lt.pos))
    global lt;  lt =emd.lt.pos; assignin('base','lt',lt); 
    global ltv; ltv=d2pt(emd.lt.pos,3,samp_freq); assignin('base','ltv',ltv); 
    disp([sprintf('\b'),' lt']);
 end
-if ~isempty(emd.st.pos)
+if ~isempty(emd.st.pos) && ~all(isnan(emd.st.pos))
    global st; st=emd.st.pos; assignin('base','st',st); 
    disp([sprintf('\b'),' st']);
 end
-if ~isempty(emd.sv.pos)
+if ~isempty(emd.sv.pos) && ~all(isnan(emd.sv.pos))
    global sv; sv=emd.sv.pos; assignin('base','sv',sv); 
    disp([sprintf('\b'),' sv']);
 end
-if ~isempty(emd.ds.pos)
+if ~isempty(emd.ds.pos) && ~all(isnan(emd.ds.pos))
    global ds; ds=emd.ds.pos; assignin('base','ds',ds); 
    disp([sprintf('\b'),' ds']);
 end
-if ~isempty(emd.tl.pos)
+if ~isempty(emd.tl.pos) && ~all(isnan(emd.tl.pos))
    global tl; tl=emd.tl.pos; assignin('base','tl',tl); 
    disp([sprintf('\b'),' tl']);
 end
-if ~isempty(emd.hh.pos)
+if ~isempty(emd.hh.pos) && ~all(isnan(emd.hh.pos))
    global hh; hh=emd.hh.pos; assignin('base','hh',hh); 
    disp([sprintf('\b'),' hh']);
 end
-if ~isempty(emd.hv.pos)
+if ~isempty(emd.hv.pos) && ~all(isnan(emd.hv.pos))
    global hv; hv=emd.hv.pos; assignin('base','hv',hv); 
    disp([sprintf('\b'),' hv']);
 end

@@ -173,7 +173,7 @@ switch lower(action)
          h.showplotH.UserData = [{h.datawindow},{chan_str},{datalineH}];
          nafxFig.UserData = [{h},{linelist}];
          ept
-         title([nameclean(emdname), ' chan_str' ])
+         title( nameclean([emdname ' chan_str']) )
          return
       end
             
