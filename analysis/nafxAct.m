@@ -1,15 +1,31 @@
+% nafxAct.m: Back-end dispatcher for nafx_gui.
+
+% Written by: Jonathan Jacobs  
+% June 2018 
+
 function nafxAct(action)
 
+if strcmpi(action,'focusgained')
+   nafxAct('updateavaildata');
+   return
+end
+
 nafxFig = findme('NAFXwindow');
-%emdmFig = findme('EM Data Manager');
 if ishandle(nafxFig)
    temp=nafxFig.UserData;
    h=temp{1};
    linelist=temp{2};
 else
-   nafx_gui
+   nafx
    %disp('ERRRRRRRORRRRR')
    return
+end
+
+emdmFig = findme('EM Data Manager');
+if ~ishandle(emdmFig)
+   datstat('null')
+   pause(0.5) % because appdesigner apps are sloooooooooooow.
+   emdmFig = findme('EM Data Manager');   
 end
 
 % handles from NAFX GUI
@@ -33,25 +49,20 @@ tau_vers2 = h.tauVersH.Value;
 age_range = h.nafx2snelH.Value;
 dblplot   = h.dblPlotNAFXH.Value;
 
+
 switch lower(action)
-   
-   case 'focusgained'
-      nafxAct('updateavaildata');      
       
    case 'selectavaildata'
       availdata = h.availDataH.String;
       newsel = h.availDataH.Value;
       nafxAct('updateavaildata');
-      
-      if newsel==length(availdata)  % refresh
-         return
-      end
+      if newsel==length(availdata), return; end
       
       % what data or data action was selected?
       if newsel==length(availdata)-1   % add new data
-         busy = 1;            
-         datstat
-         while busy==1         
+         busy = 1;
+         datstat('read')
+         while busy==1
             busy = emdmFig.UserData.busy;
             pause(0.5)
          end
@@ -59,11 +70,9 @@ switch lower(action)
          h.availDataH.Value = 1;
          return
       end
-      
-      % otherwise, it's data
+      % otherwise, it is EM data
       channels = h.emHand.f_info(newsel).chan_names;
       h.datachanH.String = channels;
-      
       
    case 'updateavaildata'
       names = h.emHand.loadednames;
@@ -77,9 +86,7 @@ switch lower(action)
          h.availDataH.Value = 1;
          h.lastselname = availdata(1);
          return
-      end
-      
-      if length(good)==1
+      elseif length(good)==1
          h.availDataH.Value=1;
          h.lastselname = names(1);
          availdata(1)=names(1);
@@ -89,23 +96,24 @@ switch lower(action)
          return
       end
       
+      % multiple data in memory
       for z = 2:length(good)
          availdata(z)=names(z);
          if strcmpi(names(z),h.lastselname)
-            lastsel=z;
+            h.lastselind=z;
          end
       end
       % select last-selected item
       h.availDataH.String = availdata;
-      h.availDataH.Value  = lastsel;
+      h.availDataH.Value  = h.lastselind;
       
       availdata = [names(good);{'Get new data'};{'Refresh'}];
-      h.lastselname = availdata(h.availDataH.Value);
+      h.lastselname = availdata(h.lastselind);
       h.availDataH.String = availdata;
       return
       
       
-   case {'showplot','newplot','updateplot'}
+   case {'plotaction'}
       emdname=h.availDataH.String{h.availDataH.Value};
       if contains(emdname,{'Get new data';'Refresh Menu'})
          disp('You need to load valid data first.')
@@ -120,36 +128,65 @@ switch lower(action)
       elseif chan_str(1)=='l', color='g';
       end
       
-      temp=h.showplotH.UserData;
+      temp=h.plotactionH.UserData;
       if ~isempty(temp)
          h.datawindow=temp{1};
          h.datachan=temp{2};
          datalineH=temp{3};
       end
-
-      if strcmpi(action,'showplot')
+      
+      % {'Choose Plot Action'};{'New Plot'};{'Grab Existing'};...
+      % {'Show Current'};{'Update Current'};
+      
+      if isempty(temp)
+         plotaction=2;
+      else
+         plotaction = h.plotactionH.Value;
+      end
+      
+      if plotaction==1  % 'Choose Plot Action'
+         return
+      end
+      
+      if plotaction==2  % 'newplot'
+         pos=evalin('base',[emdname '.' chan_str '.pos;']);
+         t=maket(pos,samp_freq);
+         h.datawindow=figure;
+         datalineH = plot(t,pos,color);zoomtool
+         h.plotactionH.UserData = [{h.datawindow},{chan_str},{datalineH}];
+         nafxFig.UserData = [{h},{linelist}];
+         ept
+         title( nameclean([emdname ' chan_str']) )
+      end
+      
+      if plotaction==3  % 'grabplot'
+         disp('Coming soon. Maybe.')
+         return
+         yorn=input('Use front figure window? ','s'); %#ok<UNRCH>
+         if strcmpi(yorn,'y')
+            frontfig=findHotW;
+            if isempty(frontfig) || ~ishandle(frontfig)
+               beep
+               disp('No eligible figure window found')
+               return
+            else
+               % LOTS to do here: Look for a front window. is it from
+               % the proper data set? what channels(s)? guess from line
+               % color?
+               figure(frontfig)
+               % get first line data? guess at channel?
+               h.showplotH.UserData = [{frontfig};{[]};{[]}];
+               zoomtool
+            end
+         end
+      end
+      
+      if plotaction==4  % 'showplot'
          if isempty(temp)
+            % should be caught before hitting this
             beep
             disp('No previous plot')
             return
-            yorn=input('Use front figure window? ','s'); %#ok<UNRCH>
-            disp('Coming soon. Maybe.')
-            if strcmpi(yorn,'y')
-               frontfig=findHotW;
-               if isempty(frontfig)
-                  beep
-                  disp('No eligible figure window found')
-                  return
-               else
-                  % LOTS to do here: Look for a front window. is it from
-                  % the proper data set? what channels(s)? guess from line
-                  % color?
-                  figure(frontfig)
-                  % get first line data? guess at channel?
-                  h.showplotH.UserData = [{frontfig};{[]};{[]}];
-                  zoomtool
-               end
-            end
          else
             % use previous datawindow
             if ishandle(h.datawindow)
@@ -162,37 +199,27 @@ switch lower(action)
                disp('Previous figure is missing')
             end
          end
-         return
       end
       
-      if isempty(temp) || strcmpi(action,'newplot')
-         pos=evalin('base',[emdname '.' chan_str '.pos;']);
-         t=maket(pos,samp_freq);
-         h.datawindow=figure;
-         datalineH = plot(t,pos,color);zoomtool
-         h.showplotH.UserData = [{h.datawindow},{chan_str},{datalineH}];
-         nafxFig.UserData = [{h},{linelist}];
-         ept
-         title( nameclean([emdname ' chan_str']) )
-         return
-      end
-            
       % get old fig handle, and assorted plot info
-      if strcmpi(action,'updateplot')
+      if plotaction==5  % 'updateplot'
          if ~ishandle(h.datawindow)
             beep
             disp('Cannot find your previous window')
             return
-         end         
+         end
          figure(h.datawindow)
-         %replace data?
+         % replace data in figure
          pos=evalin('base',[emdname '.' chan_str '.pos;']);
          t=maket(pos,samp_freq);
          datalineH.YData=pos;
          datalineH.XData=t;
          datalineH.Color=color;
          zoomclr;zoomtool
-      end      
+      end
+      
+      % set menu back to 'Choose Plot Action'
+      h.plotactionH.Value = 1;  % 'Choose Plot Action'
       
       
    case 'calcnafx'
@@ -216,7 +243,7 @@ switch lower(action)
    case 'calcfovs'
       funcNAFX  = h.fovCritNAFXH.UserData;
       valNAFX   = h.fovCritNAFXH.Value;
-      funcNAFX  = [deblank(funcNAFX(valNAFX,:)) 'gui'];      
+      funcNAFX  = [deblank(funcNAFX(valNAFX,:)) 'gui'];
       %tau       = str2double(h.tauNAFXH.String);
       
       % unfuxxor this quotidian mess!
@@ -234,12 +261,12 @@ switch lower(action)
       tau_temp = tau_surf_temp(velLimVal, posLimVal);
       h.tauNAFXH.String = num2str(tau_temp);
       
-      
    case 'done'
       nafxtemp = nafxFig.Position;
       nafxXPos = nafxtemp(1);
       nafxYPos = nafxtemp(2);
-      close(nafxFig)
+      try   delete(nafxFig)
+      catch, end
       oldpath=pwd;
       cd(findomprefs);
       if exist('posArray','var') && exist('velArray','var')
@@ -249,7 +276,7 @@ switch lower(action)
       cd(oldpath)
       
    otherwise
-      
+      % nothing
 end
 
 end %function

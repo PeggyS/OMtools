@@ -18,7 +18,7 @@ function pos_d=ao_deblink(pos, spread, inpSF)
 
 global samp_freq
 
-if nargin<3 || isempty( inpSF )
+if nargin<3 || isempty(inpSF)
    if isempty(samp_freq) || samp_freq==0
       samp_freq = input('Enter the sampling frequency: ');
    end
@@ -39,12 +39,12 @@ vel = d2pt(pos,2,samp_freq);
 acc = d2pt(vel,2,samp_freq);
 
 % assume normal distribution
-[mu_pos, sig_pos]=normfit(pos);
-[mu_vel, sig_vel]=normfit(vel);
-[mu_acc, sig_acc]=normfit(acc);
+[mu_pos,sig_pos]=normfit(pos);
+[mu_vel,sig_vel]=normfit(vel);
+[mu_acc,sig_acc]=normfit(acc);
 
 % upper/lower limits for actual eye-movement data
-min_pos_hi_lim =   40;   min_pos_lo_lim =    -40;
+min_pos_hi_lim =   50;   min_pos_lo_lim =    -50;
 min_vel_hi_lim =  2500;  min_vel_lo_lim =  -2500;
 min_acc_hi_lim = 15000;  min_acc_lo_lim = -15000;
 
