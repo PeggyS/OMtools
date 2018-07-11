@@ -42,7 +42,7 @@ seriesname = getseriesname(shortname);
 numcand = 0;
 adjlist = dir('adjbias*');
 if isempty(adjlist)
-   disp('No bias file available!')
+   %disp('No bias file available!')
    adj_fname='no adjbias file found';
    adjbiasvals=[];
    return

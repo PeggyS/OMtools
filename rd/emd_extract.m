@@ -37,7 +37,7 @@ else
    curr_name = strtok(emd_name,'.');
    match=0;
    for i=1:x
-      if strcmp(curr_name,char(candidate{i}))
+      if strcmpi(curr_name,char(candidate{i}))
          match=i;
          break
       end

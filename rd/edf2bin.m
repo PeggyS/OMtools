@@ -5,56 +5,87 @@
 % Exporting data from EDF format requires the 'edf2asc' program from SR Research.
 % It is freely available to registered users from their support website at:
 % https://www.sr-support.com/forums/index.php
-% Select the 'EyeLink Display Software' topic and from there download the version
-% for your computer's operating system. Place a copy of the 'edf2asc' executable in
-% your OMtools/rd directory to enable this program (edf2bin) to perform the conversion.
+% Select the 'EyeLink Display Software' topic and from there download the 
+% Developers Kit for your computer's operating system. 
 %
-% This program directly commands edf2asc to export the data to a '.bin' file that has
-% the same name as the original .EDF file, and in the same directory.  It is done using
-% the following command: edf2asc xxxx.edf -s -y -miss NaN
-% Dropped sample points are saved as 'NaN' (the IEEE representation for 'Not a Number').
-% Eye-movement events (saccades, fixations and blinks), and other useful EyeLink
-% configuration (e.g., screen size and pixels/deg) are saved into a MATLAB
-% file with the same name as the EDF plus '_extras.mat'.
+% This program directly commands edf2asc to export the data to a '.bin'
+% file with the same name as the original .EDF file, and in the same directory. 
+% It is done using the following command: edf2asc xxxx.edf -s -y -miss NaN
+%
+% Dropped sample points are saved as 'NaN' (IEEE-speak for 'Not a Number').
+% Eye-movement events (saccades, fixations and blinks), and other useful
+% Eyelink configuration (e.g., screen size and pixels/deg) are saved into a 
+% MATLAB file with the same name as the EDF plus '_extras.mat'.
 
 % Written by:  Jonathan Jacobs
-%              August 2000 - February 2017 (last mod: 02/01/17)
+%              August 2000 - July 2018 (last mod: 07/11/18)
 
-% 05 Apr 12 -- edf files containing multiple trials will now be properly saved
+% 05 Apr 12 -- EDF files containing multiple trials will now be properly saved
 %              in .bin format
 %              Can now deal with channels in different order than default
-% 09 Apr 12 -- Now can directly read .EDF files without requiring user intervention
-%              and modifications of intermediate .ASC file.
-% 15 Apr 13 -- Fixed for case when EDF time index (column 1) changes from 6 digits to 7
+% 09 Apr 12 -- Now can directly read .EDF files without requiring user 
+%              intervention and modifications of intermediate .ASC file.
+% 15 Apr 13 -- Fixed for case when EDF time (col 1) changes from 6 digits to 7
 % 31 Jan 17 -- Oh so many new things!
-% 03 Jul 17 -- Fixed for when there is more than 1 record - there is a h_pix_deg & v_pix_deg for each record
-%              There is a h_pix_deg & v_pix_deg for each record.
-%			   Saccades, fixations, blinks, and video frams are also now separated by
-%			   record and saved in the proper _extras.mat file
+% 03 Jul 17 -- Fixed for when there is more than 1 record, find the
+%              h_pix_deg & v_pix_deg for each record.
+%			      Saccades, fixations, blinks, and video frames are also now 
+%			      separated by record and saved in the proper _extras.mat file
+% 07 Jul 17 -- Calls to edf2asc executable should now work for Linux and maybe Windows.
+%              Detects if Eyelink Dev Kit has installed edf2asc and directs user to
+%              SR-support website if platform-appropriate edf2asc was not present.
 
 function numfiles = edf2bin(fn,pn)
 
 curdir = pwd;
 cd(findomtools); cd('rd')
 
-if (exist('edf2asc','file') ~= 2)
-   disp('To use this version of edf2bin, you need to have a copy of the SR Research')
-   disp('executable EyeLink file "edf2asc" installed in the OMtools "rd" directory.')
-   disp('If you have registered an account with SR, go to their support website at')
-   disp('https://www.sr-support.com/forums/index.php and download the EyeLink Display Software')
-   disp('for your platform (Mac, Mac OS X, Windows or Linux.  This will contain the needed file.')
+% directory containing the edf2asc binary:
+% OS X:   /Applications/Eyelink/EDF_Access_API/Example/
+% Windoz: "C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example"
+% Linux:  /usr/share/edfapi/EDF_Access_API/Example
+fsp = filesep;
+bindir_err=0; binfile_err=0;
+if isunix
+   if ismac
+      bindir='/Applications/Eyelink/EDF_Access_API/Example/';
+   else
+      bindir='/usr/share/edfapi/EDF_Access_API/Example';
+   end
+elseif ispc
+   bindir='C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example';
+end
+
+try    cd(bindir)
+catch, bindir_err=1;
+end
+if (exist('edf2asc','file') ~= 2), binfile_err=1; end
+if bindir_err==1 || binfile_err==1
+   disp(['The directory ' bindir ' does not exist.'])
+   disp('Make sure that you have installed the Eyelink Developers Kit for')
+   disp('for your platform. Login to the SR Support web site at:')
+   disp('https://www.sr-support.com/forum/downloads/eyelink-display-software')
    return
+end
+
+% special OS X exception for modified edf2asc that properly handles
+% video ett stuff. (Built by Peggy Skelly and Jonathan Jacobs 2017.)
+[rdp,~,~] = fileparts(which(mfilename));
+if exist([rdp fsp 'edf2asc'],'file')
+   binfile=[rdp fsp 'edf2asc ']; % Note the trailing space!
+else
+   binfile=[bindir 'edf2asc ']; % Note the trailing space!
 end
 
 try cd(curdir); catch, cd(matlabroot); end
 
 if nargin<2
-   [fn, pn]=uigetfile({'*.edf; *.EDF'}, 'Select an EDF file to load');
-   if fn == 0, disp('Aborted.'); return, end
+   [fn,pn]=uigetfile({'*.edf; *.EDF'}, 'Select an EDF file to load');
+   if fn==0, disp('Aborted.'); return, end
 end
 
 tic
-fname = lower(strtok(fn,'.'));
+fname = strtok(fn,'.');
 
 % stripped_uscore = 0;
 subjstr=fname;
@@ -64,14 +95,13 @@ subjstr=fname;
 % end
 
 inputfile = ['' pn fn ''];
-msgsfile =  ['' pn fname '_msgs' ''];
-datafile =  ['' pn fname '_data' ''];
+msgsfile  = ['' pn fname '_msgs' ''];
+datafile  = ['' pn fname '_data' ''];
 eventfile = ['' pn fname '_events' ''];
 
-% for scenelink info edf2asc must be called in the same folder that also
+% for Scenelink info edf2asc must be called in the same folder that also
 % has the *.ett file. That's just edf2asc.
 cd(findomtools); cd('rd')
-rd_path_str = [pwd filesep];  % the path to rd so we know how to call edf2asc
 cd(pn)
 
 % disp('')
@@ -87,7 +117,7 @@ cd(pn)
 %    samptype = 'GAZE';
 % end
 
-% HREF is not supported yet, so I'm commenting the option to ask for it out for now
+% HREF is not supported yet, so I'm commenting out the option to ask for it
 exp = ' -sg ';
 samptype = 'GAZE';
 
@@ -99,17 +129,10 @@ end
 
 % search the EDF file for sampling frequency and recorded eye channel(s)
 % This is what an entry looks like:  MSG	3964147 RECCFG CR 1000 2 1 LR
-% eval( [ '! ./edf2asc ' inputfile ' ' msgsfile '  -neye -ns -y ' ] )
-% eval( [ '! ./edf2asc ' inputfile ' ' eventfile '  -nmsg -ns -y ' ] )
-a=[rd_path_str 'edf2asc ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
+a=[binfile inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
 system(a);
-a=[rd_path_str 'edf2asc ' inputfile ' ' eventfile exp ' -nmsg -ns -y '];
+a=[binfile inputfile ' ' eventfile exp ' -nmsg -ns -y '];
 system(a);
-% if ismac
-%    eval( [ '! ' rd_path_str 'edf2asc ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y ' ] );
-%    eval( [ '! ' rd_path_str 'edf2asc ' inputfile ' ' eventfile exp ' -nmsg -ns -y ' ] );
-% elseif ispc
-% end
 disp('EDF messages exported.')
 disp('Searching for channel and frequency information.')
 
@@ -130,81 +153,98 @@ v_pix_deg = zeros(); h_pix_deg = zeros();
 start_time = zeros(); end_time = zeros();
 %filestops = zeros(); filestarts = zeros();
 
+h_pix_d=NaN; v_pix_d=NaN;
+h_pix_g=NaN; v_pix_g=NaN;
 for ii = 1:length(msgs)
-
-   str_temp = strfind( msgs{ii}, 'START');
-   if str_temp == 1
-      [~, temp] = strtok(msgs{ii});
-      [temp,~] = strtok(temp);
-      start_time(ind2) = str2double( temp );
+   % find START
+   str_temp = strfind(msgs{ii}, 'START');
+   if str_temp==1
+      [~, temp]=strtok(msgs{ii});
+      [temp,~]=strtok(temp);
+      start_time(ind2)=str2double( temp );
    end
-
    % e.g. DISPLAY_COORDS 0 0 1279 1023
-   disp_coords = strfind( msgs{ii}, 'DISPLAY_COORDS');
+   disp_coords = strfind(msgs{ii}, 'DISPLAY_COORDS');
    if disp_coords
       %get last two entries in line
       [disp_words,~] = proclinec( msgs{ii} );
-      h_pix_z = (str2double( disp_words{end-1})+1)/2;
-      v_pix_z = (str2double( disp_words{end} )+1)/2;
+      h_pix_d = (str2double(disp_words{end-1})+1)/2;
+      v_pix_d = (str2double(disp_words{end} )+1)/2;
    end
-
+   gaze_coords = strfind(msgs{ii}, 'GAZE_COORDS');
+   if gaze_coords
+      %get last two entries in line
+      [disp_words,~] = proclinec( msgs{ii} );
+      h_pix_g = (str2double(disp_words{end-1})+1)/2;
+      v_pix_g = (str2double(disp_words{end} )+1)/2;
+   end
+   % find sampling frequency
    k=strfind( msgs{ii},'RECCFG' );
    if k~=0
       ind=ind+1;
       %cfglines(ind) = ii; cfgpos(ind)=k;
-      p = strfind( msgs{ii}, '2000');
-      if p, sf(ind) = 2000; sfpos(ind)= p; end
-      p = strfind( msgs{ii}, '1000');
-      if p, sf(ind) = 1000; sfpos(ind)= p; end
-      p = strfind( msgs{ii},  '500');
-      if p, sf(ind) =  500; sfpos(ind)= p; end
-      p = strfind( msgs{ii},  '250');
-      if p, sf(ind) =  250; sfpos(ind)= p; end
+      p=strfind(msgs{ii},'2000');
+      if p, sf(ind)=2000; sfpos(ind)=p; end
+      p=strfind(msgs{ii},'1000');
+      if p, sf(ind)=1000; sfpos(ind)=p; end
+      p=strfind(msgs{ii},'500');
+      if p, sf(ind)=500; sfpos(ind)=p; end
+      p=strfind(msgs{ii},'250');
+      if p, sf(ind)=250; sfpos(ind)=p; end
 
       temp = msgs{ii}(sfpos(ind):end);
-      [~, pos_type] = strtok( temp );
-      [~, eye_code] = strtok( pos_type );
+      [~, pos_type] = strtok(temp);
+      [~, eye_code] = strtok(pos_type);
 
       eyes{ind} = 'none';
       % eyes can be encoded either by l,r, or 1,2,3.
-      if contains(eye_code,'1'), eyes{ind} = 'l'; end
-      if contains(eye_code,'2'), eyes{ind} = 'r'; end
-      if contains(eye_code,'3'), eyes{ind} = 'lr'; end
+      if contains(eye_code,'1'), eyes{ind}='l'; end
+      if contains(eye_code,'2'), eyes{ind}='r'; end
+      if contains(eye_code,'3'), eyes{ind}='lr'; end
 
-      if contains(eye_code,'L') && ~contains(eye_code,'R'),eyes{ind} = 'l'; end
-      if contains(eye_code,'R') && ~contains(eye_code,'L'),eyes{ind} = 'r'; end
-      if contains(eye_code,'LR'), eyes{ind} = 'lr'; end      
+      if contains(eye_code,'L') && ~contains(eye_code,'R'), eyes{ind}='l'; end
+      if contains(eye_code,'R') && ~contains(eye_code,'L'), eyes{ind}='r'; end
+      if contains(eye_code,'LR'), eyes{ind}='lr'; end      
    end % if k
 
-   pixres = ~isempty(strfind( msgs{ii},'RES')) && strcmp( msgs{ii}(1:3), 'END' );
+   % find pixel resolution
+   pixres = ~isempty(strfind(msgs{ii},'RES')) && strcmp(msgs{ii}(1:3),'END' );
    if pixres
       %get last two entries in line
       [pix_words,~] = proclinec( msgs{ii} );
       disp(['Vertical pixels/deg: ' pix_words{end}])
       disp(['Horizontal pixels/deg: ' pix_words{end-1}])
-      v_pix_deg(ind2) = str2double( pix_words{end-1} );
-      h_pix_deg(ind2) = str2double( pix_words{end} );
+      v_pix_deg(ind2) = str2double(pix_words{end-1} );
+      h_pix_deg(ind2) = str2double(pix_words{end} );
    end
-   vframe = ~isempty(strfind( msgs{ii},'VFRAME'));
+   vframe = ~isempty(strfind(msgs{ii},'VFRAME'));
    if vframe
-      [vframe_words,~] = proclinec( msgs{ii} );
+      [vframe_words,~] = proclinec(msgs{ii} );
       vf(ind2).framenum(v_found)  = str2double(vframe_words{4});
       vf(ind2).frametime(v_found) = str2double(vframe_words{2});
       v_found=v_found+1;
    end
-   str_temp = strfind( msgs{ii}, 'END');
+   str_temp = strfind(msgs{ii}, 'END');
    if str_temp == 1
       [~, temp] = strtok(msgs{ii});
-      [temp,~] = strtok(temp);
-      end_time(ind2) = str2double( temp );
-      ind2 = ind2 + 1;
+      [temp,~]  = strtok(temp);
+      end_time(ind2) = str2double(temp);
+      ind2 = ind2+1;
    end
-
 end % for ii
+
+% Display coords SHOULD have been set. If not, take a chance & use GAZE coords
+if isnan(v_pix_d)|| isnan(h_pix_d)
+   h_pix_z = h_pix_g;
+   v_pix_z = v_pix_g;
+else
+   h_pix_z = h_pix_d;
+   v_pix_z = v_pix_d;
+end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Now parse the EVENTS file for saccades, fixations, blinks, GAZE and/or HREF
+%% Parse the EVENTS file for saccades, fixations, blinks, GAZE and/or HREF
 events = importdata([pn fname '_events.asc'],char(13)); % '13' is CR char.
 % f_found=1; s_found=1; b_found=1;
 f_found=0; s_found=0; b_found=0;
@@ -218,7 +258,7 @@ for jj = 1:length(events)
 
 	  switch split_line{1}	% examine the 1st word in the line
 		  case 'START'
-			  recnum = find(start_time <= str2double(split_line{2}), 1, 'last');
+			  recnum = find(start_time <= str2double(split_line{2}),1,'last');
 			  f_found=0; s_found=0; b_found=0;
 		  case 'EVENTS'
 			  out_type = lower(split_line{2});
@@ -226,8 +266,8 @@ for jj = 1:length(events)
 			  f_found = f_found+1;
 			  fix(recnum).eye{f_found}=split_line{2};
 			  fix(recnum).start(f_found) = str2double(split_line{3});
-			  fix(recnum).end(f_found) = str2double(split_line{4});
-			  fix(recnum).dur(f_found) = str2double(split_line{5});
+			  fix(recnum).end(f_found)  = str2double(split_line{4});
+			  fix(recnum).dur(f_found)  = str2double(split_line{5});
 			  fix(recnum).xpos(f_found) = str2double(split_line{6});
 			  fix(recnum).ypos(f_found) = str2double(split_line{7});
 			  fix(recnum).pupi(f_found) = str2double(split_line{8});
@@ -266,11 +306,12 @@ end %jj EVENTS scan loop
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% now we'll export the samples.
+%% now export the samples.
 disp('')
-eval([ '! '  rd_path_str 'edf2asc ' inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN' ] )
+a=[binfile inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN'];
+system(a);
 disp('EDF to ASCII conversion completed.')
-disp('Importing converted data into MATLAB.  Patience is a virtue.')
+disp('Importing converted data into MATLAB. Patience is a virtue.')
 raw = importdata([pn fname '_data.asc'],'\t');
 if isempty(raw)
    disp('No eye movement data found. Aborting')
@@ -280,8 +321,8 @@ end
 %assignin('base','raw', raw)
 cd(curdir)
 
-% chop off everything after the final tab.  This will remove the non-numeric last coluumn.
-disp('Data successfully loaded.  Converting to numeric values.  Tick tock, tick tock.')
+% chop off everything after the final tab to remove the non-numeric last column.
+disp('Data successfully loaded. Converting to numeric values. Tick tock, tick tock.')
 %rawlen = length(raw);
 %numcols = zeros(rawlen,1);
 %datatxt = cell(rawlen,1);
@@ -344,8 +385,8 @@ for z = 1:length(block)
    %times_str = timecol(blockstarts(z):blockstops(z),1);
    %t=zeros(size(times_str,1),size(times_str,2));
    t_el=timecol; %%%str2double(times_str);
-   % For multiple records in a single EDF file, there will be gaps in time between
-   % each experiment. Use them to separate the experiments.
+   % For multiple records in a single EDF file, there will be gaps in time 
+   % between each experiment. Use them to separate the experiments.
    tdiff=t_el(2:end) - t_el(1:end-1);
    filestops = find(tdiff > 30 );	% changed 100 to 30
    filestops =  cat(1, filestops,numsamps);
@@ -355,14 +396,14 @@ for z = 1:length(block)
    if isempty(filestops) || length(filestops)==1
       % if there are no record separator lines, just
       % use the last row of the data as the end point
-      disp( '  Only 1 trial detected.' )
+      disp('  Only 1 trial detected.')
       % no need for '_x' in file name
       singleton = 1;
       filestarts = 1;
       filestops = numsamps;
    else
-      disp([ '  ' num2str(numfilestops) ' trials detected.'])
-      disp([ '  Separations at lines: ' mat2str(filestops)] )
+      disp(['  ' num2str(numfilestops) ' trials detected.'])
+      disp(['  Separations at lines: ' mat2str(filestops)] )
       septrials = 'y';
       %septrials = input('  Treat as individual trials? (y/n) ','s');
       if  contains( septrials, 'y' )
@@ -377,7 +418,6 @@ for z = 1:length(block)
    % default chan vals coming FROM edf2asc
    %lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
    numfilestops = length(filestops);
-   %%%x_loop_start=GetMSecs
    for x = 1:numfilestops
       clear rh_chan rv_chan lh_chan lv_chan
       disp(' ')
@@ -393,6 +433,7 @@ for z = 1:length(block)
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
                lh_chan=2; lv_chan=3; rh_chan=5; rv_chan=6;
+               chans = {'lh';'lv';'rh';'rv'};
                ch_err_flag = 0;
             end
 
@@ -405,6 +446,7 @@ for z = 1:length(block)
             yorn='y';
             if strcmpi(yorn,'y')
                lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
+               chans = {'lh';'lv';'rh';'rv'};
                ch_err_flag = 0;
             end
 
@@ -416,6 +458,7 @@ for z = 1:length(block)
             yorn = input('Is this correct? (y/n) ','s' );
             if strcmpi(yorn,'y')
                lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
+               chans = {'lh';'lv';'rh';'rv'};
                ch_err_flag = 0;
             end
 
@@ -423,10 +466,12 @@ for z = 1:length(block)
             %ch_err_flag = 1;
             if strcmpi( eyes{files+1}, 'l' )
                lh_chan=1; lv_chan=2;
+               chans = {'lh';'lv'};
                disp( '  Left eye only.' )
                disp( '  Will save in this order: [ lh lv ]')
             elseif strcmpi( eyes{files+1}, 'r')
                rh_chan=1; rv_chan=2;
+               chans = {'rh';'rv'};
                disp( '  Right eye only.' )
                disp( '  Will save in this order: [ rh rv ]')
             end
@@ -438,8 +483,8 @@ for z = 1:length(block)
             clear rh_chan rv_chan lh_chan lv_chan
       end %switch numcols
 
-      % If none of the known cases exist, prompt the user for the channel names.
-      % might need this if the data were taken in an unusual form, e.g., monocularly.
+      % If none of the known cases exist, prompt for the channel names.
+      % Needed if data were taken in an unusual way, e.g., monocularly.
       strarray = [ {'lh'},{'rh'},{'lv'},{'rv'},{'lp'},{'rp'} ];
       % name the channels
       if ch_err_flag
@@ -448,7 +493,8 @@ for z = 1:length(block)
             chtemp = data(:,i); t=maket(chtemp,sampfreq);
             figure; plot(t,chtemp)
             commandwindow
-            chname{i} = input(['Enter a name for channel ' num2str(i) '.  Enter "-" to ignore it: '],'s');
+            chname{i} = input(['Enter a name for channel ' num2str(i) ...
+               '. Enter "-" to ignore it: '],'s');
             chpos = strcmp(chname{i}, strarray);
             if chpos
                eval( [strarray{chpos} '_chan = i;'])
@@ -465,7 +511,9 @@ for z = 1:length(block)
       % h_pix_deg, v_pix_deg, start_timess sacc, fix, blink
       if exist('fix','var'),   extras.fix   = fix(x);   end
       if exist('sacc','var'),  extras.sacc  = sacc(x);  end
-      if exist('blink','var') && x <= length(blink)  % if there is more than 1 record, and no blinks in any of the records, then blink is an empty struc and accessing blink(2) causes an error
+      % if there is more than 1 record, and no blinks in any of the records,
+      % then blink is an empty struc and accessing blink(2) causes an error
+      if exist('blink','var') && x <= length(blink)  
 		  extras.blink = blink(x);
       end
       if exist('vf','var') && x <= length(vf) % ~isempty(vf)
@@ -477,12 +525,12 @@ for z = 1:length(block)
       extras.end_times   = end_time(x); % actually 1ms AFTER final sample!!!!!
       extras.out_type = out_type;
 
-      extras.numsamps = filestops(x)-filestarts(x)+1; % samples in this trial/record
+      extras.numsamps = filestops(x)-filestarts(x)+1; % samples in this record
       extras.samptype = samptype;
       extras.sampfreq = sf(x);
       extras.h_pix_z = h_pix_z;
       extras.v_pix_z = v_pix_z;
-      extras.h_pix_deg = h_pix_deg(x);	% each trial has its resolution in the msg.asc file
+      extras.h_pix_deg = h_pix_deg(x);	% each trial has its own resolution
       extras.v_pix_deg = v_pix_deg(x);
       extras.t_el.first = t_el(1);
       extras.t_el.last  = t_el(end);
@@ -513,8 +561,14 @@ for z = 1:length(block)
       yorn='y';
       if strcmpi(yorn,'y')
          [st,sv] = tgt_recon([pn fname]);
-         if ~isempty(st),dat_out=cat(1,dat_out,st);stsv=1;disp('   st data added');end
-         if ~isempty(sv),dat_out=cat(1,dat_out,sv);stsv=1;disp('   sv data added');end
+         if ~isempty(st)
+            dat_out=cat(1,dat_out,st);
+            stsv=1;disp('   st data added');
+         end
+         if ~isempty(sv)
+            dat_out=cat(1,dat_out,sv);
+            stsv=1;disp('   sv data added');
+         end
       end
       % Conversion from EL HREF values to degrees:
       %%%%% someday maybe?
@@ -539,7 +593,7 @@ toc
 %disp(' ')
 
 % because why would you record several records, each w/separate sampfreq?
-edfbiasgen(fname,pn,sf(1),files,stsv);
+edfbiasgen(fname,pn,sf(1),files,chans,stsv);
 numfiles = files;
 if nargout<1, clear numfiles; end
 
