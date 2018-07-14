@@ -25,8 +25,9 @@ emdmFig = findme('EM Data Manager');
 if ~ishandle(emdmFig)
    datstat('null')
    pause(0.5) % because appdesigner apps are sloooooooooooow.
-   emdmFig = findme('EM Data Manager');   
+   emdmFig = findme('EM Data Manager');
 end
+h.emHand = emdmFig.UserData;
 
 % handles from NAFX GUI
 samp_freq = str2double(h.sampFreqH.String);
@@ -55,7 +56,7 @@ switch lower(action)
    case 'selectavaildata'
       availdata = h.availDataH.String;
       newsel = h.availDataH.Value;
-      nafxAct('updateavaildata');
+      nafxAct('updateavaildata'); %%% necessary??
       if newsel==length(availdata), return; end
       
       % what data or data action was selected?
@@ -74,6 +75,17 @@ switch lower(action)
       channels = h.emHand.f_info(newsel).chan_names;
       h.datachanH.String = channels;
       
+   case 'findavailchans'
+      temp = h.availDataH.String;
+      currval  = h.availDataH.Value;
+      currdata=temp{currval};
+      if strcmpi(currdata,'Get new data') || strcmpi(currdata,'Refresh')
+         return
+      end
+      channels = h.emHand.f_info(currval).chan_names;
+      h.datachanH.String = channels;
+      
+      
    case 'updateavaildata'
       names = h.emHand.loadednames;
       good  = find(~cellfun(@isempty,names));
@@ -86,32 +98,32 @@ switch lower(action)
          h.availDataH.Value = 1;
          h.lastselname = availdata(1);
          return
-      elseif length(good)==1
+      end
+      
+      if length(good)==1
          h.availDataH.Value=1;
          h.lastselname = names(1);
          availdata(1)=names(1);
          availdata(2)={'Get new data'};
          availdata(3)={'Refresh'};
          h.availDataH.String = availdata;
-         return
-      end
-      
-      % multiple data in memory
-      for z = 2:length(good)
-         availdata(z)=names(z);
-         if strcmpi(names(z),h.lastselname)
-            h.lastselind=z;
+      else         
+         % multiple data in memory
+         for z = 2:length(good)
+            availdata(z)=names(z);
+            if strcmpi(names(z),h.lastselname)
+               h.lastselind=z;
+            end
          end
+         % select last-selected item
+         h.availDataH.String = availdata;
+         h.availDataH.Value  = h.lastselind;         
+         availdata = [names(good);{'Get new data'};{'Refresh'}];
+         h.lastselname = availdata(h.lastselind);
+         h.availDataH.String = availdata;         
       end
-      % select last-selected item
-      h.availDataH.String = availdata;
-      h.availDataH.Value  = h.lastselind;
-      
-      availdata = [names(good);{'Get new data'};{'Refresh'}];
-      h.lastselname = availdata(h.lastselind);
-      h.availDataH.String = availdata;
-      return
-      
+      nafxAct('findavailchans')
+
       
    case {'plotaction'}
       emdname=h.availDataH.String{h.availDataH.Value};
@@ -148,15 +160,17 @@ switch lower(action)
          return
       end
       
-      if plotaction==2  % 'newplot'
+      if plotaction==2  % 'newplot' ??or 'addtoplot'??
          pos=evalin('base',[emdname '.' chan_str '.pos;']);
          t=maket(pos,samp_freq);
          h.datawindow=figure;
-         datalineH = plot(t,pos,color);zoomtool
+         datalineH = plot(t,pos,color);
+         datalineH.DisplayName = chan_str;
+         zoomtool
          h.plotactionH.UserData = [{h.datawindow},{chan_str},{datalineH}];
          nafxFig.UserData = [{h},{linelist}];
          ept
-         title( nameclean([emdname ' chan_str']) )
+         title( nameclean([emdname ' -- ' chan_str]) )
       end
       
       if plotaction==3  % 'grabplot'

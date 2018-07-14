@@ -21,6 +21,7 @@ end
 if x == 0
    disp('No eye-movement data structures found in memory.')
    disp('Would you like to load a saved one from disk?')
+   commandwindow
    yorn=input('--> ','s');
    if strcmpi(yorn,'y')
       [fn, pn] = uigetfile('*.mat','Select an eye movement .mat file');
@@ -48,6 +49,7 @@ else
       end
       disp('Which eye-movement data do you want to extract?')
       while match<1 || match>x
+         commandwindow
          match=input('--> ');
       end
    end

@@ -430,6 +430,7 @@ for z = 1:length(block)
             disp( '   1) time, 2) lh, 3) lv, 4) lp (pupil), 5) rh, 6) rv, 7) rp' )
             disp( '   Will save in this order: [lh rh lv rv]' )
             ch_err_flag=1;
+            commandwindow
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
                lh_chan=2; lv_chan=3; rh_chan=5; rv_chan=6;
@@ -455,6 +456,7 @@ for z = 1:length(block)
             disp( '   1) lh, 2) lv, 3) lp (pupil), 4) rh, 5) rv' )
             disp( '   Will save in this order: [lh rh lv rv]' )
             ch_err_flag=1;
+            commandwindow
             yorn = input('Is this correct? (y/n) ','s' );
             if strcmpi(yorn,'y')
                lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;

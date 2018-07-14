@@ -82,6 +82,7 @@ if ~isempty(sv), disp(' 8) sv'); end
 
 whichCh=-1;
 while whichCh<0
+   commandwindow
    whichCh = str2double( input('Calibrate which channel? ','s') );
    if isnan(whichCh), whichCh=-1; end
 end
@@ -126,6 +127,7 @@ if numCols>1
 end
 
 % How many calibration points?
+commandwindow
 numcalpts = input(['How many calibration pairs (e.g. ' pm '15 = one pair)? ']);
 numMaxCalpts=numcalpts+1; numLcalpts=numcalpts+1;
 
@@ -173,8 +175,8 @@ while strcmpi(yorn,'n')
    
    % update the plot and the zoomtool y axis
    autorange_y(calaxis)   
-   commandwindow
    disp('Press ENTER to continue, or "q" to quit');
+   commandwindow
    yorn=input('Are you happy with this result (y/n)? ','s');
    if isempty(yorn), yorn='y'; end
    if strcmpi(yorn,'q')
@@ -212,6 +214,7 @@ while i<=numcalpts+1
    temp = -100000;
    while temp<max_cal(i-1) || isempty(temp)
       disp(' ')
+      commandwindow
       temp = input( ['Enter ' dir1str ' cal. value #' num2str(i-1) ': '],'s');
       temp = str2double(temp);
       if (isempty(temp)||temp==0)||isnan(temp), temp=-100000; end
@@ -287,11 +290,13 @@ while i<=numcalpts+1
       disp( '     "q" to quit, ' )    
       disp( '     "n" if you want to undo and retry,' )
       disp( '     "y" if you are happy with the result.' )
+      commandwindow
       action=input( '--> ' , 's');
       switch lower(action)
          case 'q'
             return
          case'r'
+            commandwindow
             temp=input('Enter a replacement calibration value: ','s');
             max_cal(i)=str2double(temp); 
             calpt_done=0;
@@ -359,6 +364,7 @@ while i<=numcalpts+1
    temp=100000;
    while temp>min_cal(i-1) || isempty(temp)
       disp(' ')
+      commandwindow
       temp = input(['Enter ' dir2str ' cal. value #' num2str(i-1) ': '],'s');
       temp = str2double(temp);
       if isempty(temp)||(temp==0), temp = 100000; end
@@ -439,11 +445,13 @@ while i<=numcalpts+1
       disp( '     "q" to quit, ' )    
       disp( '     "n" if you want to undo and retry,' )
       disp( '     "y" if you are happy with the result.' )
+      commandwindow
       action=input( '--> ' , 's');
       switch lower(action)
          case 'q'
             return
          case 'r'
+            commandwindow
             temp=input('Enter a replacement calibration value: ','s');
             min_cal(i)=str2double(temp);
             calpt_done=0;
