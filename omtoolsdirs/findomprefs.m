@@ -158,4 +158,7 @@ elseif ompf >1
    return
 end %if ompf
 %cd(omtoolspath); cd('..')
-cd(oldpath)
+try
+   cd(oldpath)
+catch
+end

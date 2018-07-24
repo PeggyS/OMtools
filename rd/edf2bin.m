@@ -34,6 +34,8 @@
 % 07 Jul 17 -- Calls to edf2asc executable should now work for Linux and maybe Windows.
 %              Detects if Eyelink Dev Kit has installed edf2asc and directs user to
 %              SR-support website if platform-appropriate edf2asc was not present.
+% 24 Jul 18 -- Now properly handles EDFs with multiple sub-recordings that have
+%              different channels in each record
 
 function numfiles = edf2bin(fn,pn)
 
@@ -233,6 +235,13 @@ for ii = 1:length(msgs)
    end
 end % for ii
 
+if length(start_time) ~= length(end_time)
+   disp('The number of recording stop times does not equal')
+   disp('the number of recording start times!')
+   disp('The EDF file may be damaged.')
+   return
+end
+
 % Display coords SHOULD have been set. If not, take a chance & use GAZE coords
 if isnan(v_pix_d)|| isnan(h_pix_d)
    h_pix_z = h_pix_g;
@@ -314,11 +323,9 @@ disp('EDF to ASCII conversion completed.')
 disp('Importing converted data into MATLAB. Patience is a virtue.')
 raw = importdata([pn fname '_data.asc'],'\t');
 if isempty(raw)
-   disp('No eye movement data found. Aborting')
+   disp('No eye-movement data found. Aborting.')
    return
 end
-
-%assignin('base','raw', raw)
 cd(curdir)
 
 % chop off everything after the final tab to remove the non-numeric last column.
@@ -377,7 +384,7 @@ for z = 1:length(block)
    [numsamps,numcols] = size(data);
    disp(' ')
    disp(['Block ' num2str(z) ' of ' num2str(numblocks) ])
-   disp([ '  ' num2str(numcols) ' channels detected.'])
+   disp([ '  ' num2str(numcols)  ' columns detected.'])
    disp([ '  ' num2str(numsamps) ' samples detected.'])
 
    % use slower str2double because cell2mat chokes when
@@ -416,14 +423,16 @@ for z = 1:length(block)
    end
 
    % default chan vals coming FROM edf2asc
-   %lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
+   % lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
+   % out_chans is the order data will be SAVED in the .BIN file
    numfilestops = length(filestops);
+   out_chans=cell(numfilestops,1); 
    for x = 1:numfilestops
       clear rh_chan rv_chan lh_chan lv_chan
       disp(' ')
       disp( [' Record ' num2str(files+x)] )
-      disp( ['  Starting time: ' num2str(start_time(x)) ])
-      disp( ['  Sampling frequency: ' num2str( sf(files+1) ) ])
+      disp( ['   Starting time: ' num2str(start_time(x)) ])
+      disp( ['   Sampling frequency: ' num2str( sf(files+1) ) ])
       switch numcols
          case 7
             disp( 'Default EDF->ASC export assumption: ' )
@@ -434,20 +443,20 @@ for z = 1:length(block)
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
                lh_chan=2; lv_chan=3; rh_chan=5; rv_chan=6;
-               chans = {'lh';'lv';'rh';'rv'};
+               %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
 
          case 6
             %disp( 'Default EDF->ASC export assumption: ' )
             %disp( '   1) lh, 2) lv, 3) lp (pupil), 4) rh, 5) rv, 6) rp' )
-            disp( '  Will save in this order: [lh rh lv rv]' )
+            disp( '   Will save in this order: [lh rh lv rv]' )
             ch_err_flag=1;
             %yorn = input('Is this correct? (y/n) ','s');
             yorn='y';
             if strcmpi(yorn,'y')
                lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
-               chans = {'lh';'lv';'rh';'rv'};
+               %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
 
@@ -460,7 +469,7 @@ for z = 1:length(block)
             yorn = input('Is this correct? (y/n) ','s' );
             if strcmpi(yorn,'y')
                lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
-               chans = {'lh';'lv';'rh';'rv'};
+               %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
 
@@ -468,14 +477,14 @@ for z = 1:length(block)
             %ch_err_flag = 1;
             if strcmpi( eyes{files+1}, 'l' )
                lh_chan=1; lv_chan=2;
-               chans = {'lh';'lv'};
-               disp( '  Left eye only.' )
-               disp( '  Will save in this order: [ lh lv ]')
+               %out_chans = {'lh';'lv'};
+               disp( '   Left eye only.' )
+               disp( '   Will save in this order: [ lh lv ]')
             elseif strcmpi( eyes{files+1}, 'r')
                rh_chan=1; rv_chan=2;
-               chans = {'rh';'rv'};
-               disp( '  Right eye only.' )
-               disp( '  Will save in this order: [ rh rv ]')
+               %out_chans = {'rh';'rv'};
+               disp( '   Right eye only.' )
+               disp( '   Will save in this order: [ rh rv ]')
             end
             ch_err_flag = 0;
 
@@ -541,24 +550,34 @@ for z = 1:length(block)
       save([temp{x} '_extras.mat'],[temp{x} '_extras'] )
 
       % Conversion from EL GAZE values to degrees:
-      dat_out = NaN();
+      dat_out = [];
+      c=0;
       seg = filestarts(x):filestops(x);
-      if exist('lh_chan','var')
+      if exist('lh_chan','var') && ~all(isnan(data(seg,lh_chan)))
          dat_out = ( data(seg,lh_chan)-h_pix_z )/h_pix_deg(x);
+         c=c+1;
+         out_chans{x}{c}='lh';
       end
-      if exist('rh_chan','var')
+      if exist('rh_chan','var') && ~all(isnan(data(seg,rh_chan)))
          dat_out = cat(1,dat_out,( data(seg,rh_chan)-h_pix_z )/h_pix_deg(x));
+         c=c+1;
+         out_chans{x}{c}='rh';
       end
-      if exist('lv_chan','var')
+      if exist('lv_chan','var') && ~all(isnan(data(seg,lv_chan)))
          dat_out = cat(1,dat_out, -( data(seg,lv_chan)-v_pix_z )/v_pix_deg(x));
+         c=c+1;
+         out_chans{x}{c}='lv';
       end
-      if exist('rv_chan','var')
+      if exist('rv_chan','var') && ~all(isnan(data(seg,rv_chan)))
          dat_out = cat(1,dat_out, -( data(seg,rv_chan)-v_pix_z )/v_pix_deg(x));
+         c=c+1;
+         out_chans{x}{c}='rv';
       end
+      %out_chans{x}{:}=out_chans{x}(1:c);
 
       % look for st,sv data?
       stsv=0;
-      disp(' ')
+      %disp(' ')
       %yorn=input('Do you want to try to add target data (y/n)? ','s');
       yorn='y';
       if strcmpi(yorn,'y')
@@ -579,7 +598,7 @@ for z = 1:length(block)
       fid = fopen([temp{x} '.bin'], 'w', 'n');
       fwrite(fid, dat_out, 'float');
       fclose(fid);
-      disp(['Data saved as ' pn temp{x} '.bin' ])
+      disp([' Data saved as ' pn temp{x} '.bin' ])
    end
    files = files + length(filestops);
 end % for z
@@ -595,7 +614,7 @@ toc
 %disp(' ')
 
 % because why would you record several records, each w/separate sampfreq?
-edfbiasgen(fname,pn,sf(1),files,chans,stsv);
+edfbiasgen(fname,pn,sf(1),files,out_chans,stsv);
 numfiles = files;
 if nargout<1, clear numfiles; end
 
