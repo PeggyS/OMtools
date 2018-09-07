@@ -35,6 +35,7 @@ locations = {
    };
 
 omtf=0;								%% omtools folders found
+omtoolspath=[];
 for j=1:length(locations)   
    dir_err=0;
    temp=eval( char(locations{j}(1)) );

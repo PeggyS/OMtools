@@ -584,10 +584,14 @@ for z = 1:length(block)
          [st,sv] = tgt_recon([pn fname]);
          if ~isempty(st)
             dat_out=cat(1,dat_out,st);
+            c=c+1;
+            out_chans{x}{c}='st';
             stsv=1;disp('   st data added');
          end
          if ~isempty(sv)
             dat_out=cat(1,dat_out,sv);
+            c=c+1;
+            out_chans{x}{c}='sv';
             stsv=1;disp('   sv data added');
          end
       end
