@@ -18,6 +18,12 @@ function pos_d=ao_deblink(pos, spread, inpSF)
 
 global samp_freq
 
+if all(isempty(pos))
+   disp('deblink_ao: input array is empty!')
+   pos_d = [];
+   return
+end
+
 if nargin<3 || isempty(inpSF)
    if isempty(samp_freq) || samp_freq==0
       samp_freq = input('Enter the sampling frequency: ');
