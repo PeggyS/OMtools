@@ -95,11 +95,10 @@ subjstr=fname;
 %     subjstr = subjstr(1:end-1);
 %     stripped_uscore = 1;
 % end
-
-inputfile = ['' pn fn ''];
-msgsfile  = ['' pn fname '_msgs' ''];
-datafile  = ['' pn fname '_data' ''];
-eventfile = ['' pn fname '_events' ''];
+inputfile = pathsafe( ['' pn fn ''] );
+msgsfile  = pathsafe( ['' pn fname '_msgs' ''] );
+datafile  = pathsafe( ['' pn fname '_data' ''] );
+eventfile = pathsafe( ['' pn fname '_events' ''] );
 
 % for Scenelink info edf2asc must be called in the same folder that also
 % has the *.ett file. That's just edf2asc.
@@ -144,7 +143,7 @@ disp('Searching for channel and frequency information.')
 %  "START", "RECCFG", "END", "DISPLAY", "RES", "VFRAME"
 % Use carriage return as delimiter. Each line of msgs is a single MSG.
 ind = 0; ind2 = 1; sfpos=NaN(); sf=NaN();
-msgs = importdata([pn fname '_msgs.asc'],char(13)); % '13' is CR char.
+msgs = importdata([pn fname '_msgs.asc'],char(13));
 eyes=cell(1); chname=cell(1);
 v_found=1; %gaze = 0; href = 0;
 vf = struct;
