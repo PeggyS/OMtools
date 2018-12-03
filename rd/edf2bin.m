@@ -580,7 +580,7 @@ for z = 1:length(block)
       %yorn=input('Do you want to try to add target data (y/n)? ','s');
       yorn='y';
       if strcmpi(yorn,'y')
-         [st,sv] = tgt_recon([pn fname]);
+         [st,sv] = tgt_recon([pn temp{x}]);
          if ~isempty(st)
             dat_out=cat(1,dat_out,st);
             c=c+1;
