@@ -56,7 +56,8 @@ else
    emd = evalin('base',char(candidate{match}) );
 end
 
-dataname  = emd.filename;  assignin('base','dataname',dataname);
+digdata   = emd.digdata;   assignin('base','digdata'  ,digdata);
+dataname  = emd.filename;  assignin('base','dataname' ,dataname);
 samp_freq = emd.samp_freq; assignin('base','samp_freq',samp_freq);
 numsamps  = emd.numsamps;  
 t = (1:numsamps)/samp_freq;assignin('base','t',t');

@@ -1,6 +1,13 @@
-classdef emData
-   % emData Contains necessary data for analyzing eye movements
-   %   Detailed explanation goes here
+classdef emData < dynamicprops
+   % emData: Contains lots of properties for storing and analyzing eye movements
+   % 
+   % An emData variable is created when you load in data using 'rd' or 
+   % 'datstat' (which runs on top of rd, providing a GUI for your loaded data)
+   %
+   % Type 'fields(emData)' for a list of all properties. There are additional
+   % built-in fields for your convenience, but if you want to create custom
+   % ones, create a new instance, e.g., xxxx = emData; and then use
+   % addprop(xxxx,'newprop') to add extra fields to this class.
    
    properties
       recmeth = '';   % IR, VID, COIL, RCOIL
@@ -55,10 +62,30 @@ classdef emData
          'filt_params',struct('type','','order',0,'cutoff',0));
       sv=struct('pos',[],'channel','sv','chan_comment',[], ...
          'filt_params',struct('type','','order',0,'cutoff',0));
+      st2=struct('pos',[],'channel','st2','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+      sv2=struct('pos',[],'channel','sv2','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+      st3=struct('pos',[],'channel','st3','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+      sv3=struct('pos',[],'channel','sv3','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+      st4=struct('pos',[],'channel','st4','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+      sv4=struct('pos',[],'channel','sv4','chan_comment',[], ...
+         'filt_params',struct('type','','order',0,'cutoff',0));
+
       ds=struct('pos',[],'channel','ds','chan_comment',[]);
       tl=struct('pos',[],'channel','tl','chan_comment',[]);
       
-      other = {};
+      digdata  = {};
+      digdata2 = {};
+      digdata3 = {};
+      digdata4 = {};
+      other    = {};
+      other2   = {};
+      other3   = {};
+      other4   = {};
    end
                                                         
    methods
