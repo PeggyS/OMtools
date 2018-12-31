@@ -184,14 +184,17 @@ for ii = 1:length(msgs)
    if k~=0
       ind=ind+1;
       %cfglines(ind) = ii; cfgpos(ind)=k;
+	  % if the sampling freq number is also in the time, then it finds the
+	  % number in the time string. Only look in the msg string after k
+	  % (index to start of 'RECCFG') - samp freq must be after 'RECCFG'
       p=strfind(msgs{ii},'2000');
-      if p, sf(ind)=2000; sfpos(ind)=p; end
+      if ~isempty(p) && p>k, sf(ind)=2000; sfpos(ind)=p; end
       p=strfind(msgs{ii},'1000');
-      if p, sf(ind)=1000; sfpos(ind)=p; end
+      if ~isempty(p) && p>k, sf(ind)=1000; sfpos(ind)=p; end
       p=strfind(msgs{ii},'500');
-      if p, sf(ind)=500; sfpos(ind)=p; end
+      if ~isempty(p) && p>k, sf(ind)=500; sfpos(ind)=p; end
       p=strfind(msgs{ii},'250');
-      if p, sf(ind)=250; sfpos(ind)=p; end
+      if ~isempty(p) && p>k, sf(ind)=250; sfpos(ind)=p; end
 
       temp = msgs{ii}(sfpos(ind):end);
       [~, pos_type] = strtok(temp);
