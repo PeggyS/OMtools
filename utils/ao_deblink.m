@@ -51,14 +51,19 @@ acc = d2pt(vel,3,samp_freq);
 % (can we REALLY make this assumption for EM data???)
 % Don't think so -- use histfit after doing histogram to decide.
 % -- Stats TBX function -- find basic replacement -- 
-[mu_pos,sig_pos]=normfit(stripnan(pos));
-[mu_vel,sig_vel]=normfit(stripnan(vel));
-[mu_acc,sig_acc]=normfit(stripnan(acc));
+%[mu_pos,sig_pos]=normfit(stripnan(pos));
+%[mu_vel,sig_vel]=normfit(stripnan(vel));
+%[mu_acc,sig_acc]=normfit(stripnan(acc));
+
+% FAKE FAKE FAKE!!!
+mu_pos =   50;   sig_pos =    -50;
+mu_vel =  1000;  sig_vel =  -1000;
+mu_acc = 75000;  sig_acc = -75000;
 
 % upper/lower limits for actual eye-movement data
 min_pos_hi_lim =   50;   min_pos_lo_lim =    -50;
 min_vel_hi_lim =  1000;  min_vel_lo_lim =  -1000;
-min_acc_hi_lim = 25000;  min_acc_lo_lim = -25000;
+min_acc_hi_lim = 75000;  min_acc_lo_lim = -75000;
 
 pos_hi_lim = mu_pos + spread*sig_pos; 
 pos_hi_lim = max(pos_hi_lim, min_pos_hi_lim);
@@ -77,7 +82,7 @@ pos_d = pos; %posfig=figure;plot(pos_d);hold on
 %vel_d = vel; %velfig=figure;plot(vel_d);hold on
 %acc_d = acc; %accfig=figure;plot(acc_d);hold on
 
-bad_pos = find( pos<pos_lo_lim | pos>pos_hi_lim ); 
+bad_pos = union( find(pos<pos_lo_lim), find(pos>pos_hi_lim) ); 
 pos_d(bad_pos)=NaN; %#ok<*FNDSB>
 %vel_d(bad_pos)=NaN;
 %acc_d(bad_pos)=NaN;
@@ -85,7 +90,7 @@ pos_d(bad_pos)=NaN; %#ok<*FNDSB>
 %figure(velfig);plot(vel_d,'g')
 %figure(accfig);plot(acc_d,'g')
 
-bad_vel = find( vel<vel_lo_lim | vel>vel_hi_lim ); 
+bad_vel = union( find(vel<vel_lo_lim), find(vel>vel_hi_lim) ); 
 pos_d(bad_vel)=NaN;
 %vel_d(bad_vel)=NaN;
 %acc_d(bad_vel)=NaN;
@@ -93,7 +98,7 @@ pos_d(bad_vel)=NaN;
 %figure(velfig);plot(vel_d,'r')
 %figure(accfig);plot(acc_d,'r')
 
-bad_acc = find( acc<acc_lo_lim | acc>acc_hi_lim ); 
+bad_acc = union( find(acc<acc_lo_lim), find(acc>acc_hi_lim) ); 
 pos_d(bad_acc)=NaN;
 
 % NEW NaN spread method
