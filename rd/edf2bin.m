@@ -1,4 +1,12 @@
 % edf2bin.m: convert an EDF file to a MATLAB-readable binary formatted file.
+% usage: numrecs = edf2bin(fn,pn,options)
+% OUTPUT: numrecs = number of distinct recordings in the EDF file
+% INPUT:  fn,pn: name and path of the EDF file to be read.
+%         options: 'pupil' will save pupil data. Data is saved into a
+%         separate file based on the name (and subrecord) of the EDF file.
+% NOTE: Input arguments are optional. If no file/path is specified, you will 
+%       select the EDF file ussing a system "Get File" dialog box.
+%
 % As a default, data is arranged in the following column order: [lh rh lv rv],
 % but other configurations (including pupil data) are possible.
 %
@@ -36,8 +44,9 @@
 %              SR-support website if platform-appropriate edf2asc was not present.
 % 24 Jul 18 -- Now properly handles EDFs with multiple sub-recordings that have
 %              different channels in each record
+% 03 Feb 19 -- Added option to save pupil data to a file
 
-function numfiles = edf2bin(fn,pn)
+function numfiles = edf2bin(varargin)
 
 curdir = pwd;
 cd(findomtools); cd('rd')
@@ -81,13 +90,34 @@ end
 
 try cd(curdir); catch, cd(matlabroot); end
 
-if nargin<2
+if nargin==0
+   fn=[];pn=[];
+else
+   savepupils=find(contains(lower(varargin),'pupil'));
+   is_pn = contains(varargin,filesep);
+   is_fn = contains(varargin,'.');
+
+   if is_fn, fn=varargin{is_fn};
+   else,     fn=[];
+   end
+   
+   if is_pn, pn=varargin{is_pn};
+   else,     pn=pwd;
+   end
+   
+   if is_pn==is_fn && is_fn
+      % do we care?
+   end
+end
+
+if isempty(fn)
    [fn,pn]=uigetfile({'*.edf; *.EDF'}, 'Select an EDF file to load');
    if fn==0, disp('Aborted.'); return, end
 end
 
 tic
 fname = strtok(fn,'.');
+
 
 % stripped_uscore = 0;
 subjstr=fname;
@@ -105,18 +135,20 @@ eventfile = pathsafe( ['' pn fname '_events' ''] );
 cd(findomtools); cd('rd')
 cd(pn)
 
-% disp('')
-% disp('Export samples as [G]aze (eye in space) or [H]REF (eye in head)?')
-% horg = input('-> ','s');
-% if strcmpi(horg,'h')
-%    disp('Exporting HREF data')
-%    exp = ' -sh ';
-%    samptype = 'HREF';
-% elseif strcmpi(horg,'g')
-%    disp('Exporting Gaze data')
-%    exp = ' -sg ';
-%    samptype = 'GAZE';
-% end
+%{
+disp('')
+disp('Export samples as [G]aze (eye in space) or [H]REF (eye in head)?')
+horg = input('-> ','s');
+if strcmpi(horg,'h')
+   disp('Exporting HREF data')
+   exp = ' -sh ';
+   samptype = 'HREF';
+elseif strcmpi(horg,'g')
+   disp('Exporting Gaze data')
+   exp = ' -sg ';
+   samptype = 'GAZE';
+end
+%}
 
 % HREF is not supported yet, so I'm commenting out the option to ask for it
 exp = ' -sg ';
@@ -339,39 +371,43 @@ disp('Data successfully loaded. Converting to numeric values. Tick tock, tick to
 %tic
 timecol = raw(:,1);
 data    = raw(:,2:end);
-% for i = 1:rawlen
-%    temp = raw{i};
-%    rawtabs = find(temp == 9);
-%    numcols(i) = length(rawtabs);
-%    timecol{i} = raw{i}(1:rawtabs(1)-1);
-%    rest = raw{i}( rawtabs(1):rawtabs(end) );
-%    tabs = find(rest == 9);   
-%    for j = 1:length(tabs)-1
-%       data(i,j) = str2double( rest(tabs(j)+1:tabs(j+1)) );
-%    end   
-% end
-%toc
+%{
+for i = 1:rawlen
+   temp = raw{i};
+   rawtabs = find(temp == 9);
+   numcols(i) = length(rawtabs);
+   timecol{i} = raw{i}(1:rawtabs(1)-1);
+   rest = raw{i}( rawtabs(1):rawtabs(end) );
+   tabs = find(rest == 9);   
+   for j = 1:length(tabs)-1
+      data(i,j) = str2double( rest(tabs(j)+1:tabs(j+1)) );
+   end   
+end
+toc
 
 % check num of entries in each line, because number of channels
 % can change between subtrials.
-%temp = numcols(1:end-1)-numcols(2:end);
-%chan_chg = find(temp~=0) + 1;
-%if chan_chg
-%   disp(['The number of channels changed following trial(s): ' num2str(chan_chg)])
-%   blockstarts = [1 chan_chg];
-%   blockstops  = [chan_chg-1 rawlen];
-%   block=cell(length(blockstarts));
-%   for j = 1:length(blockstarts)
-%      block{j} = cell2mat(datatxt( blockstarts(j):blockstops(j) ,:));
-%   end
-%else
-   block{1} = data;
-  %blockstarts = 1;
-  %blockstops = rawlen;
-%end
+temp = numcols(1:end-1)-numcols(2:end);
+chan_chg = find(temp~=0) + 1;
+if chan_chg
+   disp(['The number of channels changed following trial(s): ' num2str(chan_chg)])
+   blockstarts = [1 chan_chg];
+   blockstops  = [chan_chg-1 rawlen];
+   block=cell(length(blockstarts));
+   for j = 1:length(blockstarts)
+      block{j} = cell2mat(datatxt( blockstarts(j):blockstops(j) ,:));
+   end
+else
+  block{1} = data;
+  blockstarts = 1;
+  blockstops = rawlen;
+end
 numblocks=length(block);
 disp('')
+%}
 
+block{1} = data;
+numblocks=length(block);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cd(pn)
@@ -444,7 +480,7 @@ for z = 1:length(block)
             commandwindow
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
-               lh_chan=2; lv_chan=3; rh_chan=5; rv_chan=6;
+               lh_chan=2; lv_chan=3; lp_chan=4; rh_chan=5; rv_chan=6; rp_chan=7;
                %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
@@ -457,7 +493,7 @@ for z = 1:length(block)
             %yorn = input('Is this correct? (y/n) ','s');
             yorn='y';
             if strcmpi(yorn,'y')
-               lh_chan=1; lv_chan=2; rh_chan=4; rv_chan=5;
+               lh_chan=1; lv_chan=2; lp_chan=3; rh_chan=4; rv_chan=5; rp_chan=6;
                %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
@@ -478,12 +514,12 @@ for z = 1:length(block)
          case 3
             %ch_err_flag = 1;
             if strcmpi( eyes{files+1}, 'l' )
-               lh_chan=1; lv_chan=2;
+               lh_chan=1; lv_chan=2; lp_chan=3;
                %out_chans = {'lh';'lv'};
                disp( '   Left eye only.' )
                disp( '   Will save in this order: [ lh lv ]')
             elseif strcmpi( eyes{files+1}, 'r')
-               rh_chan=1; rv_chan=2;
+               rh_chan=1; rv_chan=2; rp_chan=3;
                %out_chans = {'rh';'rv'};
                disp( '   Right eye only.' )
                disp( '   Will save in this order: [ rh rv ]')
@@ -575,7 +611,22 @@ for z = 1:length(block)
          c=c+1;
          out_chans{x}{c}='rv';
       end
-      %out_chans{x}{:}=out_chans{x}(1:c);
+      % pupils get saved in _pupil.mat file
+      if savepupils
+         goodpupil=0;
+         if exist('rp_chan','var') && ~all(isnan(data(seg,rp_chan)))
+            pupil.r = data(seg,rp_chan);
+            goodpupil=1;
+         end
+         if exist('lp_chan','var') && ~all(isnan(data(seg,lp_chan)))
+            pupil.l = data(seg,lp_chan);
+            goodpupil=1;
+         end
+         if goodpupil
+            eval( [temp{x} '_pupil = pupil;'] )
+            save([temp{x} '_pupil.mat'],[temp{x} '_pupil'] )
+         end
+      end
 
       % look for st,sv data?
       stsv=0;

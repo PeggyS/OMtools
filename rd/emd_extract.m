@@ -1,3 +1,10 @@
+% emd_extract: extract data from emData structure and place into base workspace
+
+% written by: Jonathan Jacobs
+% January 2017 - January 2019
+
+% 01/25/19: Explicitly write empty data arrays to base if no valid data
+
 function emd_extract(emd_name)
 
 global dataname samp_freq
@@ -70,59 +77,124 @@ end
 
 disp([emd_name ': Channels saved to base workspace: '])
 
+global rh; global rhv;
 if ~isempty(emd.rh.pos) && ~all(isnan(emd.rh.pos))
-   global rh;  rh =emd.rh.pos; assignin('base','rh',rh); 
-   global rhv; rhv=d2pt(emd.rh.pos,3,samp_freq); assignin('base','rhv',rhv); 
+   rh =emd.rh.pos; 
+   rhv=d2pt(emd.rh.pos,3,samp_freq);
    disp([sprintf('\b'),' rh']);
+else
+   rh=[]; rhv=[];
 end
+assignin('base','rh',rh); 
+assignin('base','rhv',rhv);
+
+global lh; global lhv;
 if ~isempty(emd.lh.pos) && ~all(isnan(emd.lh.pos))
-   global lh;  lh =emd.lh.pos; assignin('base','lh',lh); 
-   global lhv; lhv=d2pt(emd.lh.pos,3,samp_freq); assignin('base','lhv',lhv); 
+   lh =emd.lh.pos;
+   lhv=d2pt(emd.lh.pos,3,samp_freq);
    disp([sprintf('\b'),' lh']);
+else
+   lh=[]; lhv=[];
 end
+assignin('base','lh',lh);
+assignin('base','lhv',lhv);
+
+global rv; global rvv;
 if ~isempty(emd.rv.pos) && ~all(isnan(emd.rv.pos))
-   global rv;  rv =emd.rv.pos; assignin('base','rv',rv); 
-   global rvv; rvv=d2pt(emd.rv.pos,3,samp_freq); assignin('base','rvv',rvv); 
+   rv =emd.rv.pos; 
+   rvv=d2pt(emd.rv.pos,3,samp_freq);
    disp([sprintf('\b'),' rv']);
+else
+   rv=[]; rvv=[];
 end
+assignin('base','rv',rv); 
+assignin('base','rvv',rvv);
+
+global lv; global lvv;
 if ~isempty(emd.lv.pos) && ~all(isnan(emd.lv.pos))
-   global lv;  lv =emd.lv.pos; assignin('base','lv',lv); 
-   global lvv; lvv=d2pt(emd.lv.pos,3,samp_freq); assignin('base','lvv',lvv); 
+   lv =emd.lv.pos;
+   lvv=d2pt(emd.lv.pos,3,samp_freq);
    disp([sprintf('\b'),' lv']);
+else
+   lv=[]; lvv=[];
 end
+assignin('base','lh',lh);
+assignin('base','lhv',lhv);
+
+global rt; global rtv;
 if ~isempty(emd.rt.pos) && ~all(isnan(emd.rt.pos))
-   global rt;  rt =emd.rt.pos; assignin('base','rt',rt); 
-   global rtv; rtv=d2pt(emd.rt.pos,3,samp_freq); assignin('base','rtv',rtv); 
+   rt =emd.rh.pos;
+   rtv=d2pt(emd.rt.pos,3,samp_freq);
    disp([sprintf('\b'),' rt']);
+else
+   rt=[]; rtv=[];
 end
+assignin('base','rt',rt);
+assignin('base','rtv',rtv);
+
+global lt; global ltv;
 if ~isempty(emd.lt.pos) && ~all(isnan(emd.lt.pos))
-   global lt;  lt =emd.lt.pos; assignin('base','lt',lt); 
-   global ltv; ltv=d2pt(emd.lt.pos,3,samp_freq); assignin('base','ltv',ltv); 
+   lt =emd.lh.pos;
+   ltv=d2pt(emd.lt.pos,3,samp_freq);
    disp([sprintf('\b'),' lt']);
+else
+   lt=[]; ltv=[];
 end
+assignin('base','lt',lt);
+assignin('base','ltv',ltv);
+
+global st; 
 if ~isempty(emd.st.pos) && ~all(isnan(emd.st.pos))
-   global st; st=emd.st.pos; assignin('base','st',st); 
+   st=emd.st.pos; 
    disp([sprintf('\b'),' st']);
+else
+   st=[];
 end
+assignin('base','st',st);
+
+global sv; 
 if ~isempty(emd.sv.pos) && ~all(isnan(emd.sv.pos))
-   global sv; sv=emd.sv.pos; assignin('base','sv',sv); 
+   sv=emd.sv.pos; 
    disp([sprintf('\b'),' sv']);
+else
+   sv=[];
 end
+assignin('base','sv',sv);
+
+global ds; 
 if ~isempty(emd.ds.pos) && ~all(isnan(emd.ds.pos))
-   global ds; ds=emd.ds.pos; assignin('base','ds',ds); 
+   ds=emd.ds.pos; 
    disp([sprintf('\b'),' ds']);
+else
+   ds=[];
 end
+assignin('base','ds',ds);
+
+global tl; 
 if ~isempty(emd.tl.pos) && ~all(isnan(emd.tl.pos))
-   global tl; tl=emd.tl.pos; assignin('base','tl',tl); 
+   tl=emd.tl.pos; 
    disp([sprintf('\b'),' tl']);
+else
+   tl=[];
 end
+assignin('base','tl',tl);
+
+global hh; 
 if ~isempty(emd.hh.pos) && ~all(isnan(emd.hh.pos))
-   global hh; hh=emd.hh.pos; assignin('base','hh',hh); 
+   hh=emd.hh.pos; 
    disp([sprintf('\b'),' hh']);
+else
+   hh=[];
 end
+assignin('base','hh',hh);
+
+global hv; 
 if ~isempty(emd.hv.pos) && ~all(isnan(emd.hv.pos))
-   global hv; hv=emd.hv.pos; assignin('base','hv',hv); 
+   hv=emd.hv.pos; 
    disp([sprintf('\b'),' hv']);
+else
+   hv=[];
 end
+assignin('base','hv',hv);
 
 % ask to load 'extras' file?
