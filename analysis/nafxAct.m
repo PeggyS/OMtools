@@ -21,11 +21,15 @@ else
    return
 end
 
-emdmFig = findme('EM Data Manager');
+emdmFig = findme('EM Data');
 if ~ishandle(emdmFig)
    datstat('null')
    pause(0.5) % because appdesigner apps are sloooooooooooow.
-   emdmFig = findme('EM Data Manager');
+end
+emdmFig = findme('EM Data');
+if ~ishandle(emdmFig)
+   disp('Can not find the data manager window.')
+   return
 end
 h.emHand = emdmFig.UserData;
 
@@ -160,7 +164,7 @@ switch lower(action)
          return
       end
       
-      if plotaction==2  % 'newplot' ??or 'addtoplot'??
+      if plotaction==2  % 'newplot' ??also 'addtoplot'??
          pos=evalin('base',[emdname '.' chan_str '.pos;']);
          t=maket(pos,samp_freq);
          h.datawindow=figure;

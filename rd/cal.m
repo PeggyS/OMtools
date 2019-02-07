@@ -169,6 +169,10 @@ while strcmpi(yorn,'n')
    disp( 'Place Cursor ONE on the desired zero point' )
    disp( 'and click the "C1 get" button.')   
    waitfor(cur1getH,'String', 'C1 get  (1)' )
+   if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
+      disp('Canceled.')
+      return
+   end
    z_adjust = xyCur1Mat(xyCur1Ctr,2);
    shiftedData = yData-z_adjust;
    plotH.YData = shiftedData;
@@ -252,6 +256,10 @@ while i<=numcalpts+1
       disp(['Place Cursor One at ' num2str(max_cal(i)) deg ...
          ' and click the "C1 get" button.'])      
       waitfor(cur1getH,'String', 'C1 get  (1)')
+      if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
+         disp('Canceled.')
+         return
+      end
       
       %calculate and display effects of performing this cal
       maxScalePts = find( maxUpdatedData > max_cal(i-1) );
@@ -400,6 +408,10 @@ while i<=numcalpts+1
       disp(['Place Cursor One at ' num2str(min_cal(i)) deg ...
          ' and click the "C1 get" button.'])      
       waitfor(cur1getH,'String', 'C1 get  (1)')
+      if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
+         disp('Canceled.')
+         return
+      end
       
       %calculate and display effects of performing this cal
       minScalePts = find(minUpdatedData < min_cal(i-1));

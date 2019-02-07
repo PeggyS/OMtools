@@ -1,11 +1,12 @@
 % edf2bin.m: convert an EDF file to a MATLAB-readable binary formatted file.
-% usage: numrecs = edf2bin(fn,pn,options)
+% usage:  numrecs = edf2bin(fn,pn,options)
 % OUTPUT: numrecs = number of distinct recordings in the EDF file
 % INPUT:  fn,pn: name and path of the EDF file to be read.
+%         (fn can incorporate the path, leaving pn empty.)
 %         options: 'pupil' will save pupil data. Data is saved into a
 %         separate file based on the name (and subrecord) of the EDF file.
-% NOTE: Input arguments are optional. If no file/path is specified, you will 
-%       select the EDF file ussing a system "Get File" dialog box.
+% NOTE:   Input arguments are optional. If no file/path is specified, you'll  
+%         be prompted to select the EDF file using a "Get File" dialog.
 %
 % As a default, data is arranged in the following column order: [lh rh lv rv],
 % but other configurations (including pupil data) are possible.
@@ -24,9 +25,10 @@
 % Eye-movement events (saccades, fixations and blinks), and other useful
 % Eyelink configuration (e.g., screen size and pixels/deg) are saved into a 
 % MATLAB file with the same name as the EDF plus '_extras.mat'.
+% Similarly, pupil samples are saved as '_pupil.mat'.
 
 % Written by:  Jonathan Jacobs
-%              August 2000 - July 2018 (last mod: 07/11/18)
+%              August 2000 - February 2019 (last mod: 02/03/19)
 
 % 05 Apr 12 -- EDF files containing multiple trials will now be properly saved
 %              in .bin format
@@ -90,12 +92,13 @@ end
 
 try cd(curdir); catch, cd(matlabroot); end
 
+savepupils=0;
 if nargin==0
    fn=[];pn=[];
 else
    savepupils=find(contains(lower(varargin),'pupil'));
-   is_pn = contains(varargin,filesep);
-   is_fn = contains(varargin,'.');
+   is_pn = find(contains(varargin,filesep));
+   is_fn = find(contains(varargin,'.'));
 
    if is_fn, fn=varargin{is_fn};
    else,     fn=[];
@@ -105,7 +108,7 @@ else
    else,     pn=pwd;
    end
    
-   if is_pn==is_fn && is_fn
+   if all(is_pn==is_fn) && any(is_fn)
       % do we care?
    end
 end
@@ -220,13 +223,13 @@ for ii = 1:length(msgs)
 	  % number in the time string. Only look in the msg string after k
 	  % (index to start of 'RECCFG') - samp freq must be after 'RECCFG'
       p=strfind(msgs{ii},'2000');
-      if ~isempty(p) && p>k, sf(ind)=2000; sfpos(ind)=p; end
+      if ~isempty(p) && p(end)>k, sf(ind)=2000; sfpos(ind)=p(end); end
       p=strfind(msgs{ii},'1000');
-      if ~isempty(p) && p>k, sf(ind)=1000; sfpos(ind)=p; end
+      if ~isempty(p) && p(end)>k, sf(ind)=1000; sfpos(ind)=p(end); end
       p=strfind(msgs{ii},'500');
-      if ~isempty(p) && p>k, sf(ind)=500; sfpos(ind)=p; end
+      if ~isempty(p) && p(end)>k, sf(ind)=500;  sfpos(ind)=p(end); end
       p=strfind(msgs{ii},'250');
-      if ~isempty(p) && p>k, sf(ind)=250; sfpos(ind)=p; end
+      if ~isempty(p) && p(end)>k, sf(ind)=250;  sfpos(ind)=p(end); end
 
       temp = msgs{ii}(sfpos(ind):end);
       [~, pos_type] = strtok(temp);
@@ -432,9 +435,9 @@ for z = 1:length(block)
    t_el=timecol; %%%str2double(times_str);
    % For multiple records in a single EDF file, there will be gaps in time 
    % between each experiment. Use them to separate the experiments.
-   tdiff=t_el(2:end) - t_el(1:end-1);
-   filestops = find(tdiff > 30 );	% changed 100 to 30
-   filestops =  cat(1, filestops,numsamps);
+   tdiff = t_el(2:end) - t_el(1:end-1);
+   filestops = find(tdiff > 30);	% changed 100 to 30
+   filestops = cat(1, filestops,numsamps);
    %filestarts = cat(1, 1,filestops(1:end-1)+1);
    numfilestops = length(filestops);
 
@@ -449,15 +452,16 @@ for z = 1:length(block)
    else
       disp(['  ' num2str(numfilestops) ' trials detected.'])
       disp(['  Separations at lines: ' mat2str(filestops)] )
-      septrials = 'y';
-      %septrials = input('  Treat as individual trials? (y/n) ','s');
+      %septrials = 'y';
+      septrials = input('  Treat as individual records? (y/n) ','s');
       if  contains( septrials, 'y' )
          filestarts = [1; (filestops+1)];
+         singleton = 0;
       else
          filestarts = 1;
          filestops = numsamps;
+         singleton=1;
       end
-      singleton = 0;
    end
 
    % default chan vals coming FROM edf2asc
@@ -469,6 +473,7 @@ for z = 1:length(block)
       clear rh_chan rv_chan lh_chan lv_chan
       disp(' ')
       disp( [' Record ' num2str(files+x)] )
+      disp( ['   Samples: ' num2str(filestops(x)-filestarts(x))] )
       disp( ['   Starting time: ' num2str(start_time(x)) ])
       disp( ['   Sampling frequency: ' num2str( sf(files+1) ) ])
       switch numcols
@@ -558,14 +563,14 @@ for z = 1:length(block)
 
       % save all the accessory data
       % h_pix_deg, v_pix_deg, start_timess sacc, fix, blink
-      if exist('fix','var'),   extras.fix   = fix(x);   end
-      if exist('sacc','var'),  extras.sacc  = sacc(x);  end
+      if exist('fix','var'),   extras.fix  = fix(x);   end
+      if exist('sacc','var'),  extras.sacc = sacc(x);  end
       % if there is more than 1 record, and no blinks in any of the records,
       % then blink is an empty struc and accessing blink(2) causes an error
-      if exist('blink','var') && x <= length(blink)  
+      if exist('blink','var') && x<=length(blink)  
 		  extras.blink = blink(x);
       end
-      if exist('vf','var') && x <= length(vf) % ~isempty(vf)
+      if exist('vf','var') && x<=length(vf) % ~isempty(vf)
          extras.vf = vf(x);
       else
          extras.vf = [];

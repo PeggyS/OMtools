@@ -87,11 +87,16 @@ else
    
 end
 
-h.EMDMwindow=findwind('EM Data Manager');
-if h.EMDMwindow==-1
+h.EMDMwindow=findwind('EM Data');
+if ~ishandle(h.EMDMwindow)
+   %try to open it
    datstat('null')
    pause(0.5) % give sloooooooooooow MLWindow time to get its shit together
-   h.EMDMwindow=findwind('EM Data Manager');
+end
+h.EMDMwindow=findwind('EM Data');
+if ~ishandle(h.EMDMwindow)
+   disp('Can not find the data manager window.')
+   return
 end
 h.emHand = h.EMDMwindow.UserData;
 
