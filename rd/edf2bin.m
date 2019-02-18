@@ -219,9 +219,11 @@ for ii = 1:length(msgs)
    if k~=0
       ind=ind+1;
       %cfglines(ind) = ii; cfgpos(ind)=k;
-	  % if the sampling freq number is also in the time, then it finds the
-	  % number in the time string. Only look in the msg string after k
-	  % (index to start of 'RECCFG') - samp freq must be after 'RECCFG'
+      % if the sampling freq number is also in the time, then it finds the
+      % number in the time string. Only look in the msg string after k
+      % (index to start of 'RECCFG') - samp freq must be after 'RECCFG'
+      % Use p(end) because it is possible that "500" (or other string)
+      % could appear earlier in the line, prob as part of the time string.
       p=strfind(msgs{ii},'2000');
       if ~isempty(p) && p(end)>k, sf(ind)=2000; sfpos(ind)=p(end); end
       p=strfind(msgs{ii},'1000');
@@ -563,8 +565,12 @@ for z = 1:length(block)
 
       % save all the accessory data
       % h_pix_deg, v_pix_deg, start_timess sacc, fix, blink
-      if exist('fix','var'),   extras.fix  = fix(x);   end
-      if exist('sacc','var'),  extras.sacc = sacc(x);  end
+      if exist('fix','var') && x<=length(fix)
+         extras.fix = fix(x);
+      end
+      if exist('sacc','var') && x<=length(sacc)
+         extras.sacc = sacc(x);
+      end
       % if there is more than 1 record, and no blinks in any of the records,
       % then blink is an empty struc and accessing blink(2) causes an error
       if exist('blink','var') && x<=length(blink)  
