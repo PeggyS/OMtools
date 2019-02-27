@@ -206,10 +206,11 @@ negData = shiftedData(negPts);
 max_cal = (1:numMaxCalpts)+100;
 max_cal(1) = 0;
 max_scale = ones(1,numMaxCalpts+1);
-max_cal_time = NaN*zeros(1,numcalpts);
+max_cal_time = NaN(1,max(numcalpts,1));
 maxUpdatedData = shiftedData;
 maxScaleIndex = zeros(1,numcalpts+1);
 max_cal_line = zeros(1,numcalpts+1);
+dispData = shiftedData; % line added by PS to handle when num cal points=0 (zero offset only)
 
 xyCur1Mat = []; xyCur1Ctr = 0;
 i=2; % because 0 degrees is entry 1.
@@ -272,7 +273,7 @@ while i<=numcalpts+1
       maxScaledData(maxScalePts) = ((maxScaledData(maxScalePts)...
          - max_cal(i-1))*max_scale(i)) + max_cal(i-1);
       maxUpdatedData = maxScaledData + restOfTheData;
-      maxUpdatedData(nan_pts) = NaN*ones(size(nan_pts)); % reinsert the NaNs
+      maxUpdatedData(nan_pts) = NaN(size(nan_pts)); % reinsert the NaNs
       
       maxPos = max( lpf(maxUpdatedData,4,samp_freq/100,samp_freq) );
       maxNeg = min( lpf(maxUpdatedData,4,samp_freq/100,samp_freq) );
@@ -358,7 +359,7 @@ posDataFinal = dispData(posPts); %positive data is done!
 minUpdatedData = maxUpdatedData;
 min_cal = -100:-1:-(100+numLcalpts);
 min_cal(1) = 0;
-min_cal_time = NaN*zeros(1,numcalpts);
+min_cal_time = NaN(1,max(numcalpts,1));
 min_scale = ones(1,numLcalpts+1);
 min_cal_line = zeros(1,numcalpts+1);
 minScaleIndex = zeros(1,numcalpts+1);
@@ -424,7 +425,7 @@ while i<=numcalpts+1
       minScaledData(minScalePts) = ((minScaledData(minScalePts)...
          - min_cal(i-1))*min_scale(i)) + min_cal(i-1);
       minUpdatedData = minScaledData + restOfTheData;
-      minUpdatedData(nan_pts) = NaN*ones(size(nan_pts));  % reinsert the NaNs
+      minUpdatedData(nan_pts) = NaN(size(nan_pts));  % reinsert the NaNs
       
       % Adjust displayed data to show results of the calibration.
       % Should only be necessary after setting 1st min cal point.
@@ -554,37 +555,48 @@ disp( ' ' )
 zStr= num2str(z_adjust);
 disp( ['Zero adjustment: ' zStr] )
 
-% set R & L equal to max of the two
-numMaxCalpts=max(numLcalpts,numMaxCalpts);
-numLcalpts=numMaxCalpts;
-
-for i=2:numMaxCalpts
-   calPtStr = num2str(max_cal(i));
-   scaleStr = num2str(max_scale(i));
-   disp([dir1str ' cal factor ' calPtStr deg ': ' scaleStr] )
-end
-rStr1 = mat2str(max_cal(2:numMaxCalpts),4);   % do not include the '0' first entry
-rStr2 = mat2str(max_scale(2:numMaxCalpts),4); % do not include the '0' first entry
-if numMaxCalpts==2
-   rStr1 = ['[' rStr1 ']'];  % mat of len 1 does not add brackets
+if numcalpts==0 % zero offset only, use default values for r & l Str - added by PS 
+	rStr1 = '[10]';
+	rStr2 = '1';
+	rStr = [rStr1 char(9) rStr2];
+	lStr1 = '[10]';
+	lStr2 = '1';
+	lStr = [lStr1 char(9) lStr2];
 else
-   rStr2 = rStr2(2:end-1);   % do not want brackets on the scaling data
+	% set R & L equal to max of the two
+	numMaxCalpts=max(numLcalpts,numMaxCalpts);
+	numLcalpts=numMaxCalpts;
+	
+	for i=2:numMaxCalpts
+		calPtStr = num2str(max_cal(i));
+		scaleStr = num2str(max_scale(i));
+		disp([dir1str ' cal factor ' calPtStr deg ': ' scaleStr] )
+	end
+	rStr1 = mat2str(max_cal(2:numMaxCalpts),4);   % do not include the '0' first entry
+	rStr2 = mat2str(max_scale(2:numMaxCalpts),4); % do not include the '0' first entry
+	
+	
+	if numMaxCalpts==2
+		rStr1 = ['[' rStr1 ']'];  % mat of len 1 does not add brackets
+	else
+		rStr2 = rStr2(2:end-1);   % do not want brackets on the scaling data
+	end
+	rStr = [rStr1 char(9) rStr2];
+	
+	for i=2:numLcalpts
+		calPtStr = num2str(min_cal(i));
+		scaleStr = num2str(min_scale(i));
+		disp([dir2str ' cal factor ' calPtStr deg ': ' scaleStr] )
+	end
+	lStr1 = mat2str(min_cal(2:numLcalpts),4);
+	lStr2 = mat2str(min_scale(2:numLcalpts),4);
+	if numLcalpts == 2
+		lStr1 = ['[' lStr1 ']'];
+	else
+		lStr2 = lStr2(2:end-1);
+	end
+	lStr = [lStr1 char(9) lStr2];
 end
-rStr = [rStr1 char(9) rStr2];
-
-for i=2:numLcalpts
-   calPtStr = num2str(min_cal(i));
-   scaleStr = num2str(min_scale(i));
-   disp([dir2str ' cal factor ' calPtStr deg ': ' scaleStr] )
-end
-lStr1 = mat2str(min_cal(2:numLcalpts),4);
-lStr2 = mat2str(min_scale(2:numLcalpts),4);
-if numLcalpts == 2
-   lStr1 = ['[' lStr1 ']'];
-else
-   lStr2 = lStr2(2:end-1);
-end
-lStr = [lStr1 char(9) lStr2];
 
 disp(' ')
 disp( [currentfile ' cal points formatted to paste into ''adjbias.txt'':'] )
