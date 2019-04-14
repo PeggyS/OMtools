@@ -43,6 +43,7 @@
 % 09/10/11 -- final figure displays a marker at each time point selected as calibration.
 % 07/09/13 -- Added ability to calibrate st, sv data.
 % 07/02/18 -- Cleaned up. Improved user interaction.
+% 03/29/19 -- Can now do zero-adjustment-only calibrations.
 
 function null = cal(null)
 
@@ -54,7 +55,7 @@ deg=char(176); pm=char(177);
 
 % determine how many times larger pos (or neg) data can be in relation to
 % neg (or pos) on plot before we temp rescale to make them appear closer in mag.
-scalelim = 4; 
+scalelim = 4;
 
 % set plot colors: if light background, use darker colors;
 % if black background, use light colors.
@@ -128,10 +129,12 @@ end
 
 % How many calibration points?
 commandwindow
-numcalpts = input(['How many calibration pairs (e.g. ' pm '15 = one pair)? ']);
+disp(['How many calibration pairs (e.g. ' pm '15 = one pair)? '])
+disp('(Enter 0 to only perform zero adjustment.)')
+numcalpts = input('-> ');
 numMaxCalpts=numcalpts+1; numLcalpts=numcalpts+1;
 
-pos     = ao_deblink(pos);  % get rid of the worst artifacts
+%pos     = ao_deblink(pos);  % get rid of the worst artifacts
 nan_pts = find(isnan(pos)); % find NaN values in the data
 
 t=maket(pos);
@@ -161,13 +164,13 @@ yorn='n';
 while strcmpi(yorn,'n')
    % set plot, lims to original values
    plotH.YData = yData;
-   autorange_y(calaxis)   
+   autorange_y(calaxis)
    xyCur1Mat = [];
    xyCur1Ctr = 0;
    cursmatr('cur1_clr')
    disp( ' ' )
    disp( 'Place Cursor ONE on the desired zero point' )
-   disp( 'and click the "C1 get" button.')   
+   disp( 'and click the "C1 get" button.')
    waitfor(cur1getH,'String', 'C1 get  (1)' )
    if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
       disp('Canceled.')
@@ -176,9 +179,9 @@ while strcmpi(yorn,'n')
    z_adjust = xyCur1Mat(xyCur1Ctr,2);
    shiftedData = yData-z_adjust;
    plotH.YData = shiftedData;
-   
+
    % update the plot and the zoomtool y axis
-   autorange_y(calaxis)   
+   autorange_y(calaxis)
    disp('Press ENTER to continue, or "q" to quit');
    commandwindow
    yorn=input('Are you happy with this result (y/n)? ','s');
@@ -224,10 +227,10 @@ while i<=numcalpts+1
       temp = str2double(temp);
       if (isempty(temp)||temp==0)||isnan(temp), temp=-100000; end
    end
-   max_cal(i) = temp;   
+   max_cal(i) = temp;
    maxScaledData = zeros(1,len);
    restOfTheData = zeros(1,len);
-   
+
    calpt_done=0;
    while ~calpt_done
       % if the scaled pos data and the unscaled neg data have wildly different
@@ -245,23 +248,23 @@ while i<=numcalpts+1
          % instead of only seeing the positive half.
          dispData(negPts)=negData*max_scale(2);
       end
-      
+
       % set plot, lims to their zero-adjusted values
       plotH.YData = dispData;
       autorange_y(calaxis)
-      
+
       rSkipFlag = 0;
       xyCur1Mat = []; xyCur1Ctr = 0;
       cursmatr('cur1_clr')
       disp( ' ' )
       disp(['Place Cursor One at ' num2str(max_cal(i)) deg ...
-         ' and click the "C1 get" button.'])      
+         ' and click the "C1 get" button.'])
       waitfor(cur1getH,'String', 'C1 get  (1)')
       if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
          disp('Canceled.')
          return
       end
-      
+
       %calculate and display effects of performing this cal
       maxScalePts = find( maxUpdatedData > max_cal(i-1) );
       restPts     = find( maxUpdatedData <= max_cal(i-1) );
@@ -274,7 +277,7 @@ while i<=numcalpts+1
          - max_cal(i-1))*max_scale(i)) + max_cal(i-1);
       maxUpdatedData = maxScaledData + restOfTheData;
       maxUpdatedData(nan_pts) = NaN(size(nan_pts)); % reinsert the NaNs
-      
+
       maxPos = max( lpf(maxUpdatedData,4,samp_freq/100,samp_freq) );
       maxNeg = min( lpf(maxUpdatedData,4,samp_freq/100,samp_freq) );
       dispData = maxUpdatedData;
@@ -283,20 +286,20 @@ while i<=numcalpts+1
          % to get pos & neg in same range
          dispData(negPts) = negData*max_scale(2);
       end
-            
+
       % update the plot and the zoomtool y axis
       plotH.YData = dispData;
-      autorange_y(calaxis)      
+      autorange_y(calaxis)
       % put up a line at this cal point
       max_cal_line(i) = line([0 max(t)],[max_cal(i) max_cal(i)]);
       set(max_cal_line(i),'Color',[0.6 0.6 0.6]);
       set(max_cal_line(i),'LineStyle','-.');
       maxstr=[num2str(max_cal(i)) deg];
-      
+
       commandwindow
       disp( 'Type "s" to skip this point,' )
       disp(['     "r" to replace ' maxstr ' as the current cal value,'])
-      disp( '     "q" to quit, ' )    
+      disp( '     "q" to quit, ' )
       disp( '     "n" if you want to undo and retry,' )
       disp( '     "y" if you are happy with the result.' )
       commandwindow
@@ -307,7 +310,7 @@ while i<=numcalpts+1
          case'r'
             commandwindow
             temp=input('Enter a replacement calibration value: ','s');
-            max_cal(i)=str2double(temp); 
+            max_cal(i)=str2double(temp);
             calpt_done=0;
          case 's'
             max_scale(i) = 1; maxScaleIndex(i) = NaN;
@@ -315,7 +318,7 @@ while i<=numcalpts+1
             set(max_cal_line(i),'Color',[0.6 0.6 0.6]);
             set(max_cal_line(i),'LineStyle','-.');
             rSkipFlag = 1;
-            break      
+            break
          case 'y'
             calpt_done=1;
          case 'n'
@@ -327,7 +330,7 @@ while i<=numcalpts+1
             %
       end %switch
    end %while ~calpt_done
-   
+
    if ~rSkipFlag
       maxScaleIndex(i) = xyCur1Mat(xyCur1Ctr,1);
       max_cal_time(i-1) = maxScaleIndex(i)/samp_freq(1);
@@ -337,7 +340,7 @@ while i<=numcalpts+1
       maxScaleIndex(i)  = NaN;
       max_cal_time(i-1) = NaN;
    end
-   
+
    i=i+1;
 end %while i
 posDataFinal = dispData(posPts); %positive data is done!
@@ -345,7 +348,7 @@ posDataFinal = dispData(posPts); %positive data is done!
 
 % Scale the left/down/ccw-ward calibration pts. Our starting point
 % is the right-scaled data from the last loop. If we make a mistake,
-% or are simply not happy with the min-cal points we choose, we reset the 
+% or are simply not happy with the min-cal points we choose, we reset the
 % data and axis limits to those of the right-scaled data.
 % We finish by scaling only those points that have NEGATIVE values.
 % Data with NaNs are now handled properly.
@@ -379,7 +382,7 @@ while i<=numcalpts+1
       if isempty(temp)||(temp==0), temp = 100000; end
    end
    min_cal(i)=temp;
-   
+
    calpt_done=0;
    while ~calpt_done
       % 1st time we do this, it sets pos data range to match as-of-yet unscaled
@@ -401,32 +404,32 @@ while i<=numcalpts+1
       end
       plotH.YData=dispData;
       autorange_y(calaxis)
-      
+
       lSkipFlag=0;
       xyCur1Mat = []; xyCur1Ctr = 0;
       cursmatr('cur1_clr')
       disp(' ')
       disp(['Place Cursor One at ' num2str(min_cal(i)) deg ...
-         ' and click the "C1 get" button.'])      
+         ' and click the "C1 get" button.'])
       waitfor(cur1getH,'String', 'C1 get  (1)')
       if isempty(xyCur1Mat) % user canceled. (closed zoomtool window?)
          disp('Canceled.')
          return
       end
-      
+
       %calculate and display effects of performing this cal
       minScalePts = find(minUpdatedData < min_cal(i-1));
       restPts     = find(minUpdatedData >= min_cal(i-1));
       minScaledData(minScalePts) = minUpdatedData(minScalePts);
       restOfTheData(restPts)     = minUpdatedData(restPts);
-      
+
       backedupData = dispData;
       min_scale(i) = (min_cal(i)-min_cal(i-1))/(xyCur1Mat(xyCur1Ctr,2)-min_cal(i-1));
       minScaledData(minScalePts) = ((minScaledData(minScalePts)...
          - min_cal(i-1))*min_scale(i)) + min_cal(i-1);
       minUpdatedData = minScaledData + restOfTheData;
       minUpdatedData(nan_pts) = NaN(size(nan_pts));  % reinsert the NaNs
-      
+
       % Adjust displayed data to show results of the calibration.
       % Should only be necessary after setting 1st min cal point.
       maxPos = max( lpf(minUpdatedData,4,samp_freq/100,samp_freq) );
@@ -442,10 +445,10 @@ while i<=numcalpts+1
                [dispData(maxScaleIndex(z)) dispData(maxScaleIndex(z))] );
          end
       end
-      
+
       % update the plot and the zoomtool y axis
       plotH.YData=dispData;
-      autorange_y(calaxis)      
+      autorange_y(calaxis)
       % put up a line at this cal point
       min_cal_line(i) = line([0 max(t)],[min_cal(i) min_cal(i)]);
       set(min_cal_line(i),'Color',[0.6 0.6 0.6]);
@@ -455,7 +458,7 @@ while i<=numcalpts+1
       commandwindow
       disp( 'Type "s" to skip this point,' )
       disp(['     "r" to replace ' minstr ' as the current cal value,' ])
-      disp( '     "q" to quit, ' )    
+      disp( '     "q" to quit, ' )
       disp( '     "n" if you want to undo and retry,' )
       disp( '     "y" if you are happy with the result.' )
       commandwindow
@@ -483,7 +486,7 @@ while i<=numcalpts+1
             calpt_done=0;
       end %while switch
    end %while calpt
-   
+
    if ~lSkipFlag
       minScaleIndex(i) = xyCur1Mat(xyCur1Ctr,1);
       min_cal_time(i-1) = minScaleIndex(i)/samp_freq(1);
@@ -493,8 +496,8 @@ while i<=numcalpts+1
       minScaleIndex(i)  = NaN;
       min_cal_time(i-1) = NaN;
    end
-   
-   i=i+1;   
+
+   i=i+1;
 end %while i
 
 xyCur1Mat = []; xyCur1Ctr = 0;
@@ -539,11 +542,11 @@ maxcalptmarks = maxUpdatedData(maxScaleIndex);
 % and as long as we're at it, put some sanity-check points on the figure to show
 % the actual points selected to perform the calibration.
 hold on; ept
-tempH = plot(zeroPtTime, zerocalptmark,'m*');        
+tempH = plot(zeroPtTime, zerocalptmark,'m*');
 if ishandle(tempH),tempH.MarkerSize=10; end
-tempH = plot(min_cal_time_good, mincalptmarks,'m*'); 
+tempH = plot(min_cal_time_good, mincalptmarks,'m*');
 if ishandle(tempH),tempH.MarkerSize=10; end
-tempH = plot(max_cal_time_good, maxcalptmarks,'m*'); 
+tempH = plot(max_cal_time_good, maxcalptmarks,'m*');
 if ishandle(tempH),tempH.MarkerSize=10; end
 
 % Display the zero, max/min cal values in a well-formatted manner
@@ -555,7 +558,7 @@ disp( ' ' )
 zStr= num2str(z_adjust);
 disp( ['Zero adjustment: ' zStr] )
 
-if numcalpts==0 % zero offset only, use default values for r & l Str - added by PS 
+if numcalpts==0 % zero offset only, use default values for r & l Str - added by PS
 	rStr1 = '[10]';
 	rStr2 = '1';
 	rStr = [rStr1 char(9) rStr2];
@@ -566,7 +569,7 @@ else
 	% set R & L equal to max of the two
 	numMaxCalpts=max(numLcalpts,numMaxCalpts);
 	numLcalpts=numMaxCalpts;
-	
+
 	for i=2:numMaxCalpts
 		calPtStr = num2str(max_cal(i));
 		scaleStr = num2str(max_scale(i));
@@ -574,15 +577,15 @@ else
 	end
 	rStr1 = mat2str(max_cal(2:numMaxCalpts),4);   % do not include the '0' first entry
 	rStr2 = mat2str(max_scale(2:numMaxCalpts),4); % do not include the '0' first entry
-	
-	
+
+
 	if numMaxCalpts==2
 		rStr1 = ['[' rStr1 ']'];  % mat of len 1 does not add brackets
 	else
 		rStr2 = rStr2(2:end-1);   % do not want brackets on the scaling data
 	end
 	rStr = [rStr1 char(9) rStr2];
-	
+
 	for i=2:numLcalpts
 		calPtStr = num2str(min_cal(i));
 		scaleStr = num2str(min_scale(i));

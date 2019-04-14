@@ -19,18 +19,25 @@ product=lower(product);
 if isempty(kbIndices)
     sca
     disp('Oops! No keyboard detected! (How did you run this?)')
+    kbIndex=-1; kbName='missing';
     return
 end
+
+% if there's only one kbd, and it looks marginally valid, great!
+% return device #1, and no need to sift through all the candidates!
 if length(kbIndices) == 1
-   if ~isempty(strfind((product{1}),'keyboard')) || ~isempty(strfind(lower(product{1}),'kb'))
+   if ~contains(product{1},'keyboard') || ~contains(product{1},'key board') ...
+         ||~contains(product{1},'kb')
       kbIndex = kbIndices(1); %only one keyboard. Hope it's valid
       kbName  = product(1);
    else
       disp('Oops! No keyboard detected! (How did you run this?)')
+      kbIndex=-1; kbName='missing';
    end
    return
 end
 
+% oh, well. time to sift...
 % look at names of each device. Compare against list of known devices
 % or potential matches, e.g. KB, K/B, etc. If not able to make a choice
 % then prompt the user for intervention.    
@@ -46,7 +53,7 @@ for kbl = 1:length(kbIndices)
          
     % do you feel lucky, punk? Well, do you?
     if ~forcecheck
-       if strfind(tempKBname, chickendinner)
+       if strfind(tempKBname, chickendinner) %#ok<STRIFCND>
           kbIndex = kbIndices(kbl);
           kbName  = product(kbl);
           return
@@ -122,7 +129,7 @@ end
 % we didn't know
 disp(' ')
 disp('Something is terribly wrong. I have failed you.')
-kbIndex = 0;
+kbIndex=-1; kbName='missing';
 
 % more KB TF: examine returned keyCode list
 %disp('      ***')

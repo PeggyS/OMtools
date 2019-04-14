@@ -65,7 +65,7 @@ else
          temp = reverse(dec2bin(colorval));
          colorval = [0 0 0 0];
          for ii=1:length(temp)
-            colorval(ii)=str2num(temp(ii));
+            colorval(ii)=str2double(temp(ii));
          end
       end
       color.index = colorval(1)*4 + colorval(2)*2 + colorval(3) + 1;
