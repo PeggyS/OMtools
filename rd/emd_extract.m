@@ -118,8 +118,8 @@ if ~isempty(emd.lv.pos) && ~all(isnan(emd.lv.pos))
 else
    lv=[]; lvv=[];
 end
-assignin('base','lh',lh);
-assignin('base','lhv',lhv);
+assignin('base','lv',lv);
+assignin('base','lvv',lvv);
 
 global rt; global rtv;
 if ~isempty(emd.rt.pos) && ~all(isnan(emd.rt.pos))
