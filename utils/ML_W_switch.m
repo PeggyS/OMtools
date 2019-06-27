@@ -26,6 +26,9 @@ switch lower(which)
    otherwise
       disp('ML_W_switch: unknown action.')
 end
-cd(olddir)
 
+try
+   cd(olddir)
+catch
+end
 % could also use system('open ML(W)_act.app')

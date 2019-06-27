@@ -158,8 +158,8 @@ exp = ' -sg ';
 samptype = 'GAZE';
 
 sc_flag = '';
-ett_file = strrep(fn,'.EDF', '0.ett');
-if exist(ett_file, 'file') % matching the file name is case sensitive!
+ett_file = strrep(lower(fn),'.edf', '0.ett'); % make strrep of the edf file case insensitive
+if exist(ett_file, 'file') 
    sc_flag = ' -scenecam';
 end
 
