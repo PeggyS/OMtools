@@ -9,12 +9,6 @@ if nargin==0
    figname = hFig.Name;
    fn_name='ftest_act'; %eg 'nafx_gui' name of the caller function
 else
-	if isa(fn_name,'function_handle')
-		
-	else
-		
-	end
-	
    % use specified window, can specify by either handle or Tag string
    if ishandle(whatfig)
       hFig=whatfig;
@@ -34,8 +28,6 @@ if ~isempty(jFig)
    jAxis = jFig.getAxisComponent;
    
    % Set the event callbacks (fname is 3rd arg in receiving funct)
-   %set(jAxis.getComponent(0), ...
-   %   'FocusGainedCallback',{@myMatlabFunc,fn_name});
    set(jAxis.getComponent(0), ...
       'FocusGainedCallback',{@myMatlabFunc,fn_name,'gained'});
    set(jAxis.getComponent(0), ...
@@ -61,11 +53,10 @@ else
    end
    
 end
-end % function addfocus
+end % function
 
 
-
-function myMatlabFunc(jAxis,jEventData, fn_name,gorl) %#ok<INUSL>
+function myMatlabFunc(jAxis, jEventData, fn_name,gorl) %#ok<INUSL>
 % do whatever you wish with the event/hFig information
 if contains(gorl,'gained')
    %if contains(char(jEventData),'FOCUS_GAINED')
