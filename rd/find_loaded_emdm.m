@@ -11,6 +11,7 @@ dat.loadednames=cell(tlen,1);
 cnt=0;
 for ii=1:tlen
    if strcmpi(temp(ii).class,'emData')
+      if strcmpi(temp(ii).name,'ans');continue;end
       cnt=cnt+1;
       [~,emd_info] = getEMD(temp(ii).name);
       if isempty(emd_info)
@@ -39,7 +40,10 @@ if nargin==0,   return;end
 if isempty(go), return;end
 
 %go.UserData=dat;
-go.String=[dat.loadednames;{'Refresh menu';'Get new data'}];
+if ishandle(go) && strcmp(go.Style,'popupmenu')
+   go.String=[dat.loadednames;{'Refresh menu';'Get new data'}];
+else
+end
 
 end %function update_datalist
 

@@ -1,20 +1,14 @@
-function addfocus(whatfig,fn_name)
+function addfocus(whatfig,foc_fun,varargin)
 
 if nargin==0
    % demo mode. create test focus window
    if (0), hFig = figure;   %#ok<*UNRCH>
-   else,   hFig = uifigure; pause(0.1); % SLOOOOOOOW... wait for it to be registered 
+   else,   hFig = uifigure; pause(0.1); % SLOOOOOOOW... wait for it to be registered
    end
    hFig.Name = 'focustest';
    figname = hFig.Name;
-   fn_name='ftest_act'; %eg 'nafx_gui' name of the caller function
+   foc_fun='ftest_act'; %eg 'nafx_gui' name of the caller function
 else
-	if isa(fn_name,'function_handle')
-		
-	else
-		
-	end
-	
    % use specified window, can specify by either handle or Tag string
    if ishandle(whatfig)
       hFig=whatfig;
@@ -27,19 +21,17 @@ end
 
 % Get the underlying Java reference
 warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
-jFig = get(hFig, 'JavaFrame');
+jFrame = hFig.JavaFrame;
 
-if ~isempty(jFig)
-   % for old-style figures   
-   jAxis = jFig.getAxisComponent;
+if ~isempty(jFrame)
+   % for old-style figures
+   jAxis = jFrame.getAxisComponent;
+   a=jAxis.getComponent(0);
+   ah=handle(a,'CallbackProperties');
    
    % Set the event callbacks (fname is 3rd arg in receiving funct)
-   %set(jAxis.getComponent(0), ...
-   %   'FocusGainedCallback',{@myMatlabFunc,fn_name});
-   set(jAxis.getComponent(0), ...
-      'FocusGainedCallback',{@myMatlabFunc,fn_name,'gained'});
-   set(jAxis.getComponent(0), ...
-      'FocusLostCallback',  {@myMatlabFunc,fn_name,'lost'});
+   ah.FocusGainedCallback={@focus_act,foc_fun,'gained',varargin};
+   ah.FocusLostCallback  ={@focus_act,foc_fun,'lost',varargin};
    
 else
    % for UIFIGURE.
@@ -53,29 +45,52 @@ else
       end
    end
    if found
-      win.FocusGained = {@myMatlabFunc,fn_name,'gained'};
-      win.FocusLost   = {@myMatlabFunc,fn_name,'lost'};
+      win.FocusGained = {@focus_act,foc_fun,'gained'};
+      win.FocusLost   = {@focus_act,foc_fun,'lost'};
    else
       disp('Could not find UIFIGURE window')
       return
    end
    
 end
-end % function addfocus
+end % function
 
 
-
-function myMatlabFunc(jAxis,jEventData, fn_name,gorl) %#ok<INUSL>
+function focus_act(jAxis,jEventData,foc_fun,gorl,varargin) %#ok<INUSL>
 % do whatever you wish with the event/hFig information
 if contains(gorl,'gained')
+   %disp('focus gained')
    %if contains(char(jEventData),'FOCUS_GAINED')
    focusgained = 'focusgained';
-   cmdname = [fn_name '(' focusgained ');'];
+   if isa(foc_fun,'function_handle')
+      if isempty(varargin{:})
+         feval(foc_fun,'focusgained');
+      else
+         feval(foc_fun,varargin,'focusgained');
+      end
+      return
+   else
+      cmdname = [foc_fun '(' focusgained ');'];
+   end
 elseif contains(gorl,'lost')
+   %disp('focus lost')
    %elseif contains(char(jEventData),'FOCUS_LOST')
    focuslost = 'focuslost';
-   cmdname = [fn_name '(' focuslost ');'];
+   if isa(foc_fun,'function_handle')
+      if isempty(varargin{:})
+         feval(foc_fun,'focuslost');
+      else
+         feval(foc_fun,varargin,'focuslost');
+      end
+      return
+   else
+      cmdname = [foc_fun '(' focuslost ');'];
+   end
 end
-eval(cmdname)
+
+try    eval(cmdname)
+catch, disp(['addfocus: could not run ' cmdname ])
 end
+
+end % my
 

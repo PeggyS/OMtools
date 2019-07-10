@@ -7,17 +7,24 @@ if ishandle(emdm)
 else
 	datstat
 	pause(0.25)
+   emdm=findwind('EM Data');
 	busy=emdm.UserData.busy;
 end
 
+if nargin==0,go=[];end
 if nargin==1,action=[];end
 
-if nargin==0, go=[];end
-if ischar(go),go=[];end
-if isempty(go) || ~ishandle(go)
-	go=gco; % popup control
-	if isempty(go);return;end
+if iscell(go)
+   temp=go;
+   clear go
+   go=temp{1}{1};
+elseif ischar(go)
+   go=[];
+elseif isempty(go) || ~ishandle(go)
+	go=gco; % popup control	
 end
+
+if isempty(go) || ~ishandle(go);return;end
 
 dat=find_loaded_emdm(go);
 
