@@ -45,7 +45,7 @@ if length(linends)==1
    fname{1}=res;
 else
    disp('0) Cancel')
-   fname=cell(length(linends));
+   fname=cell(length(linends), 1);
    for i=1:length(linends)
       [fname{i},res]=strtok(res,10); %#ok<STTOK>
       disp([num2str(i),') ' fname{i}])
@@ -62,4 +62,4 @@ end
 res=fname{which};
 seps = find(res==filesep);
 pn = res(1: seps(end));
-fn = res(seps(end)+1:end-1);
+fn = strip(res(seps(end)+1:end));
