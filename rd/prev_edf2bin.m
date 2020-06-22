@@ -128,14 +128,10 @@ subjstr=fname;
 %     subjstr = subjstr(1:end-1);
 %     stripped_uscore = 1;
 % end
-%inputfile = pathsafe( ['' pn fn ''] );
-%msgsfile  = pathsafe( ['' pn fname '_msgs' ''] );
-%datafile  = pathsafe( ['' pn fname '_data' ''] );
-%eventfile = pathsafe( ['' pn fname '_events' ''] );
-inputfile  = fullfile(pn,fn);
-msgsfile   = fullfile(pn,[fname '_msgs'] );
-datafile   = fullfile(pn,[fname '_data'] );
-eventsfile = fullfile(pn,[fname '_events'] );
+inputfile = pathsafe( ['' pn fn ''] );
+msgsfile  = pathsafe( ['' pn fname '_msgs' ''] );
+datafile  = pathsafe( ['' pn fname '_data' ''] );
+eventfile = pathsafe( ['' pn fname '_events' ''] );
 
 % for Scenelink info edf2asc must be called in the same folder that also
 % has the *.ett file. That's just edf2asc.
@@ -171,7 +167,7 @@ end
 % This is what an entry looks like:  MSG	3964147 RECCFG CR 1000 2 1 LR
 a=[binfile inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
 system(a);
-a=[binfile inputfile ' ' eventsfile exp ' -nmsg -ns -y '];
+a=[binfile inputfile ' ' eventfile exp ' -nmsg -ns -y '];
 system(a);
 disp('EDF messages exported.')
 disp('Searching for channel and frequency information.')
@@ -677,7 +673,7 @@ end % for z
 
 try cd(curdir); catch, cd(matlabroot); end
 
-%delete([pn fname '_data.asc'])
+delete([pn fname '_data.asc'])
 
 disp(' ')
 toc
