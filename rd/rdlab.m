@@ -3,7 +3,7 @@
 % Author:  Vallabh Das
 % Edited by: Jeff Somers
 
-global2
+%global2
 
 [filename , path] = uigetfile('*.lab') ;
 if filename == 0   
@@ -32,7 +32,8 @@ smpf = str2double(char(f5')) ;
 clear f5
 fseek(fid,1,'cof') ;
 f6 = fread(fid,100,'char') ;
-calib = str2double(char(f6')) ;
+%calib = str2double(char(f6')) ;
+calib = str2num(char(f6')) ; %#ok<ST2NM>
 clear f6
 fseek(fid,1,'cof') ;
 f7 = fread(fid,9,'char') ;

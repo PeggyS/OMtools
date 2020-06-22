@@ -82,5 +82,7 @@ else
    omtoolspath = char(omtoolspath);
 end
 
-cd(oldpath)
+try    cd(oldpath)
+catch, end
+
 return

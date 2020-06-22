@@ -62,4 +62,4 @@ end
 res=fname{which};
 seps = find(res==filesep);
 pn = res(1: seps(end));
-fn = strip(res(seps(end)+1:end));
+fn = res(seps(end)+1:end-1);

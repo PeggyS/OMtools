@@ -28,7 +28,7 @@
 % Similarly, pupil samples are saved as '_pupil.mat'.
 
 % Written by:  Jonathan Jacobs
-%              August 2000 - February 2019 (last mod: 02/03/19)
+%              August 2000 - May 2020 (last mod: 05/15/20)
 
 % 05 Apr 12 -- EDF files containing multiple trials will now be properly saved
 %              in .bin format
@@ -47,6 +47,7 @@
 % 24 Jul 18 -- Now properly handles EDFs with multiple sub-recordings that have
 %              different channels in each record
 % 03 Feb 19 -- Added option to save pupil data to a file
+% 15 May 20 -- Now recognizes and imports data with head pos ('hh','hv')
 
 function numfiles = edf2bin(varargin)
 
@@ -54,41 +55,62 @@ curdir = pwd;
 cd(findomtools); cd('rd')
 
 % directory containing the edf2asc binary:
-% OS X:   /Applications/Eyelink/EDF_Access_API/Example/
-% Windoz: "C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example"
+% Mac:    /Applications/Eyelink/EDF_Access_API/Example/
+% Window: "C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example"
 % Linux:  /usr/share/edfapi/EDF_Access_API/Example
 fsp = filesep;
-bindir_err=0; binfile_err=0;
+%bindir_err=0; 
 if isunix
    if ismac
       bindir='/Applications/Eyelink/EDF_Access_API/Example/';
+      secret=exist('edf2asc','file');
+      if secret==2
+         bindir=[pwd fsp];
+      end
+      edf2asc_name = 'edf2asc';  % removed the trailing spaces 04/13/20
    else
-      bindir='/usr/share/edfapi/EDF_Access_API/Example';
+      bindir='/usr/share/edfapi/EDF_Access_API/Example/';
+      edf2asc_name = 'edf2asc';  % Note the trailing space!!!
    end
 elseif ispc
-   bindir='C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example';
+   bindir='C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example\';
+   edf2asc_name = 'edf2asc.exe';  % Note the trailing space!!!
 end
 
-try    cd(bindir)
-catch, bindir_err=1;
-end
-if (exist('edf2asc','file') ~= 2), binfile_err=1; end
-if bindir_err==1 || binfile_err==1
-   disp(['The directory ' bindir ' does not exist.'])
-   disp('Make sure that you have installed the Eyelink Developers Kit for')
-   disp('for your platform. Login to the SR Support web site at:')
-   disp('https://www.sr-support.com/forum/downloads/eyelink-display-software')
-   return
+if secret ~= 2
+   try
+      cd(bindir)
+   catch
+      %bindir_err=1;
+      disp(['The directory ' bindir ' does not exist.'])
+      disp('Make sure that you have installed the Eyelink Developers Kit for')
+      disp('for your platform. Login to the SR Support web site at:')
+      disp('https://www.sr-support.com/forum/downloads/eyelink-display-software')
+      return
+   end
+   
+   
+   binfile_err=0;
+   if (exist(edf2asc_name,'file') ~= 2), binfile_err=1; end
+   if binfile_err==1
+      disp([edf2asc_name ' does not exist in' bindir])
+      disp('Make sure that you have installed the Eyelink Developers Kit for')
+      disp('for your platform. Login to the SR Support web site at:')
+      disp('https://www.sr-support.com/forum/downloads/eyelink-display-software')
+      return
+   end
 end
 
+%{{
 % special OS X exception for modified edf2asc that properly handles
 % video ett stuff. (Built by Peggy Skelly and Jonathan Jacobs 2017.)
 [rdp,~,~] = fileparts(which(mfilename));
-if exist([rdp fsp 'edf2asc'],'file')
-   binfile=[rdp fsp 'edf2asc ']; % Note the trailing space!
+if exist([rdp fsp edf2asc_name],'file')
+   binfile=[rdp fsp edf2asc_name ]; % edf2asc_name includes trailing space!
 else
-   binfile=[bindir 'edf2asc ']; % Note the trailing space!
+   binfile=[bindir edf2asc_name];
 end
+%}
 
 try cd(curdir); catch, cd(matlabroot); end
 
@@ -169,9 +191,9 @@ end
 
 % search the EDF file for sampling frequency and recorded eye channel(s)
 % This is what an entry looks like:  MSG	3964147 RECCFG CR 1000 2 1 LR
-a=[binfile inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
+a=[binfile ' ' inputfile ' ' msgsfile exp sc_flag ' -neye -ns -y '];
 system(a);
-a=[binfile inputfile ' ' eventsfile exp ' -nmsg -ns -y '];
+a=[binfile ' ' inputfile ' ' eventsfile exp ' -nmsg -ns -y '];
 system(a);
 disp('EDF messages exported.')
 disp('Searching for channel and frequency information.')
@@ -206,14 +228,14 @@ for ii = 1:length(msgs)
    % e.g. DISPLAY_COORDS 0 0 1279 1023
    disp_coords = strfind(msgs{ii}, 'DISPLAY_COORDS');
    if disp_coords
-      %get last two entries in line
+      % get last two entries in line
       [disp_words,~] = proclinec( msgs{ii} );
       h_pix_d = (str2double(disp_words{end-1})+1)/2;
       v_pix_d = (str2double(disp_words{end} )+1)/2;
    end
    gaze_coords = strfind(msgs{ii}, 'GAZE_COORDS');
    if gaze_coords
-      %get last two entries in line
+      % get last two entries in line
       [disp_words,~] = proclinec( msgs{ii} );
       h_pix_g = (str2double(disp_words{end-1})+1)/2;
       v_pix_g = (str2double(disp_words{end} )+1)/2;
@@ -255,7 +277,7 @@ for ii = 1:length(msgs)
    % find pixel resolution
    pixres = ~isempty(strfind(msgs{ii},'RES')) && strcmp(msgs{ii}(1:3),'END' );
    if pixres
-      %get last two entries in line
+      % get last two entries in line
       [pix_words,~] = proclinec( msgs{ii} );
       disp(['Vertical pixels/deg: ' pix_words{end}])
       disp(['Horizontal pixels/deg: ' pix_words{end-1}])
@@ -360,7 +382,7 @@ end %jj EVENTS scan loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% now export the samples.
 disp('')
-a=[binfile inputfile ' ' datafile exp ' -s -t -y -nflags -miss NaN'];
+a=[binfile ' ' inputfile ' ' datafile exp ' -s -t -y -hpos -nflags -miss NaN'];
 system(a);
 disp('EDF to ASCII conversion completed.')
 disp('Importing converted data into MATLAB. Patience is a virtue.')
@@ -483,6 +505,20 @@ for z = 1:length(block)
       disp( ['   Starting time: ' num2str(start_time(x)) ])
       disp( ['   Sampling frequency: ' num2str( sf(files+1) ) ])
       switch numcols
+         case 9
+            disp( 'Default EDF->ASC export assumption: ' )
+            disp( '   1) time, 2) lh, 3) lv, 4) lp (pupil), 5) rh, 6) rv, 7) rp, 8) hh, 9) hv' )
+            disp( '   Will save in this order: [lh rh lv rv hh hv]' )
+            ch_err_flag=1;
+            commandwindow
+            yorn = input('Is this correct? (y/n) ','s');
+            if strcmpi(yorn,'y')
+               lh_chan=2; lv_chan=3; lp_chan=4; rh_chan=5; rv_chan=6; rp_chan=7;
+               hh_chan=8; hv_chan=9;
+               %out_chans = {'lh';'rh';'lv';'rv'};
+               ch_err_flag = 0;
+            end
+            
          case 7
             disp( 'Default EDF->ASC export assumption: ' )
             disp( '   1) time, 2) lh, 3) lv, 4) lp (pupil), 5) rh, 6) rv, 7) rp' )
@@ -607,25 +643,47 @@ for z = 1:length(block)
       c=0;
       seg = filestarts(x):filestops(x);
       if exist('lh_chan','var') && ~all(isnan(data(seg,lh_chan)))
-         dat_out = ( data(seg,lh_chan)-h_pix_z )/h_pix_deg(x);
+         dat_out=(data(seg,lh_chan)-h_pix_z)/h_pix_deg(x);
          c=c+1;
          out_chans{x}{c}='lh';
       end
       if exist('rh_chan','var') && ~all(isnan(data(seg,rh_chan)))
-         dat_out = cat(1,dat_out,( data(seg,rh_chan)-h_pix_z )/h_pix_deg(x));
+         dat_out=cat(1,dat_out, (data(seg,rh_chan)-h_pix_z)/h_pix_deg(x));
          c=c+1;
          out_chans{x}{c}='rh';
       end
       if exist('lv_chan','var') && ~all(isnan(data(seg,lv_chan)))
-         dat_out = cat(1,dat_out, -( data(seg,lv_chan)-v_pix_z )/v_pix_deg(x));
+         dat_out=cat(1,dat_out, -(data(seg,lv_chan)-v_pix_z)/v_pix_deg(x));
          c=c+1;
          out_chans{x}{c}='lv';
       end
       if exist('rv_chan','var') && ~all(isnan(data(seg,rv_chan)))
-         dat_out = cat(1,dat_out, -( data(seg,rv_chan)-v_pix_z )/v_pix_deg(x));
+         dat_out=cat(1,dat_out, -(data(seg,rv_chan)-v_pix_z)/v_pix_deg(x));
          c=c+1;
          out_chans{x}{c}='rv';
       end
+      if exist('hh_chan','var') && ~all(isnan(data(seg,hh_chan)))
+         dat_out=cat(1,dat_out, data(seg,hh_chan));
+         c=c+1;
+         out_chans{x}{c}='hh';
+      end
+      if exist('hv_chan','var') && ~all(isnan(data(seg,hv_chan)))
+         dat_out=cat(1,dat_out, -data(seg,hv_chan));
+         c=c+1;
+         out_chans{x}{c}='hv';
+      end
+      %{
+      if exist('hh_chan','var') && ~all(isnan(data(seg,hh_chan)))
+         dat_out=cat(1,dat_out, (data(seg,hh_chan)-h_pix_z)/h_pix_deg(x));
+         c=c+1;
+         out_chans{x}{c}='hh';
+      end
+      if exist('hv_chan','var') && ~all(isnan(data(seg,hv_chan)))
+         dat_out=cat(1,dat_out, -(data(seg,hv_chan)-v_pix_z)/v_pix_deg(x));
+         c=c+1;
+         out_chans{x}{c}='hv';
+      end
+      %}
       % pupils get saved in _pupil.mat file
       if savepupils
          goodpupil=0;
@@ -665,7 +723,7 @@ for z = 1:length(block)
       end
       % Conversion from EL HREF values to degrees:
       %%%%% someday maybe?
-
+      
       % write the EM data to file
       fid = fopen([temp{x} '.bin'], 'w', 'n');
       fwrite(fid, dat_out, 'float');

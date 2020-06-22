@@ -47,7 +47,7 @@
 
 function null = cal(null)
 
-global lh rh lv rv lt rt st sv xyCur1Mat xyCur1Ctr samp_freq dataname cur1getH
+global lh rh lv rv lt rt st sv hh hv xyCur1Mat xyCur1Ctr samp_freq dataname cur1getH
 
 if isempty(dataname), dataname='unknown filename'; end
 currentfile = lower(deblank(dataname(end,:)));
@@ -80,6 +80,8 @@ if ~isempty(rt), disp(' 5) rt'); end
 if ~isempty(lt), disp(' 6) lt'); end
 if ~isempty(st), disp(' 7) st'); end
 if ~isempty(sv), disp(' 8) sv'); end
+if ~isempty(hh), disp(' 9) hh'); end
+if ~isempty(hv), disp('10) hv'); end
 
 whichCh=-1;
 while whichCh<0
@@ -105,6 +107,10 @@ switch whichCh
    case 7, pos = st; whatChStr = 'st'; dir1str = 'rightward';
       dir2str = 'leftward'; lcolor = 'r';
    case 8, pos = sv; whatChStr = 'sv'; dir1str = 'upward';
+      dir2str = 'downward'; lcolor = 'g';
+   case 9, pos = hh; whatChStr = 'hh'; dir1str = 'rightward';
+      dir2str = 'leftward'; lcolor = 'r';
+   case 10, pos = hv; whatChStr = 'hv'; dir1str = 'upward';
       dir2str = 'downward'; lcolor = 'g';
    otherwise, disp('Invalid selection. Run ''cal'' again.'), return
 end

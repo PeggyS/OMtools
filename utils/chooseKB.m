@@ -6,7 +6,7 @@ function [kbIndex, kbName] = chooseKB(forcecheck)
 %    devices, rather than automatically guess one based on available names.
 
 % Written by; Jonathan Jacobs
-% November 2015 - August 2017  (last mod: 4 August 2017)
+% November 2015 - March 2020  (last mod: 18 March 2020)
 
 if nargin==0,forcecheck=0;end
 
@@ -17,17 +17,18 @@ product=lower(product);
 % go through list, use KbCheck + on-screen prompt: "press 'j' key" while monitoring
 % each "keyboard" entry for keypress activity.
 if isempty(kbIndices)
-    sca
-    disp('Oops! No keyboard detected! (How did you run this?)')
-    kbIndex=-1; kbName='missing';
-    return
+   try     sca
+   catch,  end
+   disp('Oops! No keyboard detected! (How did you run this?)')
+   kbIndex=-1; kbName='missing';
+   return
 end
 
 % if there's only one kbd, and it looks marginally valid, great!
 % return device #1, and no need to sift through all the candidates!
 if length(kbIndices) == 1
    if ~contains(product{1},'keyboard') || ~contains(product{1},'key board') ...
-         ||~contains(product{1},'kb')
+         || ~contains(product{1},'kb') || ~contains(product{1},'kbd')
       kbIndex = kbIndices(1); %only one keyboard. Hope it's valid
       kbName  = product(1);
    else
@@ -40,34 +41,35 @@ end
 % oh, well. time to sift...
 % look at names of each device. Compare against list of known devices
 % or potential matches, e.g. KB, K/B, etc. If not able to make a choice
-% then prompt the user for intervention.    
+% then prompt the user for intervention.
 foundlist = zeros(2, length(kbIndices) );
 goodKBlist = [ {'key'}, {'kb'}, {'kbd'}, {'board'}];
-chickendinner = {'apple keyboard'}; % could add other known winners here
+% could add other known winners here
+chickendinner = {'apple keyboard','apple internal keyboard'};
 for kbl = 1:length(kbIndices)
-    temp = lower( product{kbl} );
-    alpha_ind = isstrprop(temp, 'alpha'); % all alphabetic characters OR
-    ws_ind = isstrprop(temp, 'wspace');   % all whitespace characters
-    aws_ind = alpha_ind | ws_ind ;        % YIELDS no numbers, punctuation
-    tempKBname = temp(aws_ind);
-         
-    % do you feel lucky, punk? Well, do you?
-    if ~forcecheck
-       if strfind(tempKBname, chickendinner) %#ok<STRIFCND>
-          kbIndex = kbIndices(kbl);
-          kbName  = product(kbl);
-          return
-       end
-    end
-    
-    % compare device string against possible matches.
-    for i=1:length(goodKBlist)
-       if strfind(tempKBname, goodKBlist{i})
-          foundlist(1,kbIndices(kbl)) = 1;
-          foundlist(2,kbIndices(kbl)) = kbl;
-       end
-    end
-end    
+   temp = lower( product{kbl} );
+   alpha_ind = isstrprop(temp, 'alpha'); % all alphabetic characters OR
+   ws_ind = isstrprop(temp, 'wspace');   % all whitespace characters
+   aws_ind = alpha_ind | ws_ind ;        % YIELDS no numbers, punctuation
+   tempKBname = temp(aws_ind);
+   
+   % do you feel lucky, punk? Well, do you?
+   if ~forcecheck
+      if strfind(tempKBname, chickendinner) %#ok<STRIFCND>
+         kbIndex = kbIndices(kbl);
+         kbName  = product(kbl);
+         return
+      end
+   end
+   
+   % compare device string against possible matches.
+   for i=1:length(goodKBlist)
+      if strfind(tempKBname, goodKBlist{i})
+         foundlist(1,kbIndices(kbl)) = 1;
+         foundlist(2,kbIndices(kbl)) = kbl;
+      end
+   end
+end
 
 % only one keyboard candidate found. Select it and exit.
 kbcandidates = find(foundlist(1,:)==1);
@@ -90,7 +92,7 @@ disp('I have found multiple devices that may be keyboards');
 disp('Hit the "j" key (probably multiple times) to identify the keyboard')
 commandwindow
 timeout = 0.125;
-loopstart=GetSecs; looptimeout=15;
+loopstart=GetSecs; looptimeout=15;%15;
 while GetSecs<loopstart+looptimeout
    for kbl = 1:length(kbcandidates)
       start_time=GetSecs(0);
@@ -99,8 +101,10 @@ while GetSecs<loopstart+looptimeout
       [~, keyCode, ~] = KbWait(kbcandidates(kbl),0,start_time+timeout);
       if keyCode(13)~=0
          kbIndex = kbcandidates(kbl);
-         kbName  = product(kbl);
+         n=find(kbIndices==kbcandidates(kbl));
+         kbName  = product{n}; %#ok<FNDSB>
          disp(['Got it! -- ' char(kbName) ', index #' num2str(kbIndex)])
+         if nargout==0,clear kbIndex kbName, end
          return
       end
    end
@@ -110,26 +114,38 @@ disp('loop timeout')
 % last ditch effort if autoguess and kbd polling didn't work.
 disp('I cannot figure it out. It is up to you, human.');
 disp('   0: I don''t know, either!!!')
-for kbl = 1:length(kbcandidates)
-    disp(['   ' num2str(kbl) ': ' allInfos{kbl}.product])
-end    
-       
-whichKB = -1;
-while whichKB < 0 || whichKB > length(kbcandidates)
-    whichKB = input('Which device do you want to use? ');
+for kbl = kbcandidates
+   n=find(kbIndices==kbl);
+   disp(['   ' num2str(kbl) ': ' allInfos{n}.product]) %#ok<FNDSB>
 end
 
-disp(' ')
-if whichKB > 0
-   kbIndex = kbIndices(whichKB);
-   kbName  = product{whichKB};
-   return
-end    
-       
+done=0;
+disp('Which device do you want to use? ("0" to use default)')
+while ~done
+   whichKB = input('  --> ');
+   if whichKB==0
+      %done=1;
+      kbIndex=-1;
+      kbName='missing';
+      disp('Will accept input from any keyboard.')
+      if nargout==0,clear kbIndex kbName, end
+      return
+   end
+   if any(ismember(kbcandidates,whichKB))
+      %done=1;
+      n=find(kbIndices==whichKB);
+      kbIndex=n;
+      kbName  = product{kbIndex};
+      disp(['Using  ', kbName '.'])
+      if nargout==0,clear kbIndex kbName, end
+      return
+   end
+end
+
 % we didn't know
-disp(' ')
-disp('Something is terribly wrong. I have failed you.')
-kbIndex=-1; kbName='missing';
+%disp(' ')
+%disp('Something is terribly wrong. I have failed you.')
+%kbIndex=-1; kbName='missing';
 
 % more KB TF: examine returned keyCode list
 %disp('      ***')
