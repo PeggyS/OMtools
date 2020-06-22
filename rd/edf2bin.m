@@ -668,7 +668,7 @@ for z = 1:length(block)
          out_chans{x}{c}='hh';
       end
       if exist('hv_chan','var') && ~all(isnan(data(seg,hv_chan)))
-         dat_out=cat(1,dat_out, -data(seg,hv_chan));
+         dat_out=cat(1,dat_out, data(seg,hv_chan));
          c=c+1;
          out_chans{x}{c}='hv';
       end
