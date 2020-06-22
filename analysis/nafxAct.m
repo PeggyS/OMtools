@@ -5,6 +5,11 @@
 
 function nafxAct(action)
 
+if strcmpi(action,'focusgained')
+   nafxAct('updateavaildata');
+   return
+end
+
 nafxFig = findme('NAFXwindow');
 if ishandle(nafxFig)
    temp=nafxFig.UserData;
@@ -16,32 +21,17 @@ else
    return
 end
 
-% window refresh      
-if strcmpi(action,'focusgained') || strcmpi(action,'updateAvailData')
-   dat=select_emdata(h.availDataH,'refresh_menu');
-   if ~isempty(dat.loadednames{1})
-      dat=select_emdata(h.availDataH,'selectdata');
-      if isfield(dat,'data') && isa(dat.data,'emData')
-         h.dat=dat;
-      end
-   end
-   return
-end
-
-
-% find datstat window
-emdm = findme('EM Data');
-if ~ishandle(emdm)
-   datstat
+emdmFig = findme('EM Data');
+if ~ishandle(emdmFig)
+   datstat('null')
    pause(0.5) % because appdesigner apps are sloooooooooooow.
 end
-emdm = findwind('EM Data');
-if ~ishandle(emdm)
+emdmFig = findme('EM Data');
+if ~ishandle(emdmFig)
    disp('Can not find the data manager window.')
    return
-else
-   h.emHand = emdm.UserData;
 end
+h.emHand = emdmFig.UserData;
 
 % handles from NAFX GUI
 samp_freq = str2double(h.sampFreqH.String);
@@ -65,31 +55,83 @@ age_range = h.nafx2snelH.Value;
 dblplot   = h.dblPlotNAFXH.Value;
 
 
-if strcmpi(action,'done')
-   nafxtemp = nafxFig.Position;
-   nafxXPos = nafxtemp(1);
-   nafxYPos = nafxtemp(2);
-   try   delete(nafxFig)
-   catch, end
-   oldpath=pwd;
-   cd(findomprefs);
-   if exist('posArray','var') && exist('velArray','var')
-      save nafxprefs.mat nafxXPos nafxYPos posArray velArray ...
-         posLim velLim dblplot age_range fovstat tau_vers2;
-   end
-   cd(oldpath)
-   return
-end
-
-
 switch lower(action)
-   
+      
    case 'selectavaildata'
-      h.dat=select_emdata(h.availDataH,[]);
+      availdata = h.availDataH.String;
+      newsel = h.availDataH.Value;
+      nafxAct('updateavaildata'); %%% necessary??
+      if newsel==length(availdata), return; end
+      
+      % what data or data action was selected?
+      if newsel==length(availdata)-1   % add new data
+         busy = 1;
+         datstat('read')
+         while busy==1
+            busy = emdmFig.UserData.busy;
+            pause(0.5)
+         end
+         %disp('wait is over!')
+         h.availDataH.Value = 1;
+         return
+      end
+      % otherwise, it is EM data
+      channels = h.emHand.f_info(newsel).chan_names;
+      h.datachanH.String = channels;
+      
+   case 'findavailchans'
+      temp = h.availDataH.String;
+      currval  = h.availDataH.Value;
+      currdata=temp{currval};
+      if strcmpi(currdata,'Get new data') || strcmpi(currdata,'Refresh')
+         return
+      end
+      channels = h.emHand.f_info(currval).chan_names;
+      h.datachanH.String = channels;
+      
+      
+   case 'updateavaildata'
+      names = h.emHand.loadednames;
+      good  = find(~cellfun(@isempty,names));
+      availdata=h.availDataH.String;
+      
+      if isempty(good)
+         availdata(1)={'Get new data'};
+         availdata(2)={'Refresh'};
+         h.availDataH.String = availdata;
+         h.availDataH.Value = 1;
+         h.lastselname = availdata(1);
+         return
+      end
+      
+      if length(good)==1
+         h.availDataH.Value=1;
+         h.lastselname = names(1);
+         availdata(1)=names(1);
+         availdata(2)={'Get new data'};
+         availdata(3)={'Refresh'};
+         h.availDataH.String = availdata;
+      else         
+         % multiple data in memory
+         for z = 2:length(good)
+            availdata(z)=names(z);
+            if strcmpi(names(z),h.lastselname)
+               h.lastselind=z;
+            end
+         end
+         % select last-selected item
+         h.availDataH.String = availdata;
+         h.availDataH.Value  = h.lastselind;         
+         availdata = [names(good);{'Get new data'};{'Refresh'}];
+         h.lastselname = availdata(h.lastselind);
+         h.availDataH.String = availdata;         
+      end
+      nafxAct('findavailchans')
+
       
    case {'plotaction'}
       emdname=h.availDataH.String{h.availDataH.Value};
-      if contains(emdname,{'Refresh Menu';'Get new data'})
+      if contains(emdname,{'Get new data';'Refresh Menu'})
          disp('You need to load valid data first.')
          return
       end
@@ -127,10 +169,6 @@ switch lower(action)
          t=maket(pos,samp_freq);
          h.datawindow=figure;
          datalineH = plot(t,pos,color);
-         if ~ishandle(datalineH)
-            disp('Could not plot the line')
-            return
-         end
          datalineH.DisplayName = chan_str;
          zoomtool
          h.plotactionH.UserData = [{h.datawindow},{chan_str},{datalineH}];
@@ -240,7 +278,21 @@ switch lower(action)
       tau_surf_temp = tau_surface(tau_vers2);
       tau_temp = tau_surf_temp(velLimVal, posLimVal);
       h.tauNAFXH.String = num2str(tau_temp);
-            
+      
+   case 'done'
+      nafxtemp = nafxFig.Position;
+      nafxXPos = nafxtemp(1);
+      nafxYPos = nafxtemp(2);
+      try   delete(nafxFig)
+      catch, end
+      oldpath=pwd;
+      cd(findomprefs);
+      if exist('posArray','var') && exist('velArray','var')
+         save nafxprefs.mat nafxXPos nafxYPos posArray velArray ...
+            posLim velLim dblplot age_range fovstat tau_vers2;
+      end
+      cd(oldpath)
+      
    otherwise
       % nothing
 end
