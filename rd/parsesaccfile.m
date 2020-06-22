@@ -31,8 +31,7 @@ if isfield(extras, 'sacc')
                data.lh.saccades.sacclist.dur(l_cnt) = sacc.dur(i);
                data.lh.saccades.sacclist.startpos(l_cnt) = (sacc.xpos(i)-h_pix_z)/h_pix_deg;
                data.lh.saccades.sacclist.endpos(l_cnt) = (sacc.xposend(i)-h_pix_z)/h_pix_deg;
-%                data.lh.saccades.sacclist.ampl(l_cnt) = (sacc.ampl(i)-h_pix_z)/h_pix_deg;
-			   data.lh.saccades.sacclist.ampl(l_cnt) = sacc.ampl(i);
+               data.lh.saccades.sacclist.ampl(l_cnt) = (sacc.ampl(i)-h_pix_z)/h_pix_deg;
                data.lh.saccades.sacclist.pvel(l_cnt) = sacc.pvel(i);
             end
             if ~isempty(sacc.ypos)
@@ -42,8 +41,7 @@ if isfield(extras, 'sacc')
                data.lv.saccades.sacclist.dur(l_cnt) = sacc.dur(i);
                data.lv.saccades.sacclist.startpos(l_cnt) = (sacc.ypos(i)-v_pix_z)/v_pix_deg;
                data.lv.saccades.sacclist.endpos(l_cnt) = (sacc.yposend(i)-v_pix_z)/v_pix_deg;
-%                data.lv.saccades.sacclist.ampl(l_cnt) = (sacc.ampl(i)-v_pix_z)/v_pix_deg;
-			   data.lv.saccades.sacclist.ampl(l_cnt) = sacc.ampl(i);
+               data.lv.saccades.sacclist.ampl(l_cnt) = (sacc.ampl(i)-v_pix_z)/v_pix_deg;
                data.lv.saccades.sacclist.pvel(l_cnt) = sacc.pvel(i);
             end
             
@@ -56,8 +54,7 @@ if isfield(extras, 'sacc')
                data.rh.saccades.sacclist.dur(r_cnt) = sacc.dur(i);
                data.rh.saccades.sacclist.startpos(r_cnt) = (sacc.xpos(i)-h_pix_z)/h_pix_deg;
                data.rh.saccades.sacclist.endpos(r_cnt) = (sacc.xposend(i)-h_pix_z)/h_pix_deg;
-%                data.rh.saccades.sacclist.ampl(r_cnt) = (sacc.ampl(i)-h_pix_z)/h_pix_deg;
-			   data.rh.saccades.sacclist.ampl(r_cnt) = sacc.ampl(i);
+               data.rh.saccades.sacclist.ampl(r_cnt) = (sacc.ampl(i)-h_pix_z)/h_pix_deg;
                data.rh.saccades.sacclist.pvel(r_cnt) = sacc.pvel(i);
             end
             if ~isempty(sacc.ypos)
@@ -67,8 +64,7 @@ if isfield(extras, 'sacc')
                data.rv.saccades.sacclist.dur(r_cnt) = sacc.dur(i);
                data.rv.saccades.sacclist.startpos(r_cnt) = (sacc.ypos(i)-v_pix_z)/v_pix_deg;
                data.rv.saccades.sacclist.endpos(r_cnt) = (sacc.yposend(i)-v_pix_z)/v_pix_deg;
-%                data.rv.saccades.sacclist.ampl(r_cnt) = (sacc.ampl(i)-v_pix_z)/v_pix_deg;
-			   data.rv.saccades.sacclist.ampl(r_cnt) = sacc.ampl(i);
+               data.rv.saccades.sacclist.ampl(r_cnt) = (sacc.ampl(i)-v_pix_z)/v_pix_deg;
                data.rv.saccades.sacclist.pvel(r_cnt) = sacc.pvel(i);
             end
       end %switch

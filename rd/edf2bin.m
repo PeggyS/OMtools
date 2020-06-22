@@ -677,7 +677,7 @@ end % for z
 
 try cd(curdir); catch, cd(matlabroot); end
 
-%delete([pn fname '_data.asc'])
+delete([pn fname '_data.asc'])
 
 disp(' ')
 toc
