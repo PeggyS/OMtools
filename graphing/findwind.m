@@ -6,15 +6,15 @@
 % Written by:  Jonathan Jacobs
 %              September 1997  (last mod: 09/10/97)
 
-function winH = findwind(name,field)
+function winH = findwind(instring,field)
 
 winH = -1;
 
-if nargin<1 || isempty(name)
+if nargin<1 || isempty(instring)
    disp('findwind error: name can not be empty')
    return
 end
-if nargin<2, field = 'Name'; end
+if nargin<2, field='Name'; end
 
 switch lower(field)
    case 'name'
@@ -31,7 +31,8 @@ if isempty(ch), return; end
 
 % check the children for the given string
 for ii = 1:length(ch)
-   if strcmpi( ch(ii).(field),name )
+   %if strcmpi( ch(ii).(field),instring )
+   if contains( lower(ch(ii).(field)),lower(instring) )
       winH = ch(ii);
       return
    end
