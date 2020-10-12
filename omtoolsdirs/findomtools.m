@@ -1,4 +1,4 @@
-function omtoolspath = findomtools
+function [omtoolspath,out] = findomtools
 
 % written by:  Jonathan Jacobs
 %              February 2011
@@ -19,7 +19,7 @@ elseif strcmp(comp(1),'p')|| strcmp(comp(1),'w')
    sharedir = 'C:\Program Files\Common Files'; %#ok<NASGU>
 end
 
-oldpath = pwd;
+olddir = pwd;
 cd(matlabroot)
 if strcmpi(homedir,'/home/mluser')
    homedir='/MATLAB Drive'; %#ok<NASGU>
@@ -40,6 +40,7 @@ locations = {
 
 omtf=0;								%% omtools folders found
 omtoolspath = cell(10,1);
+ot_ver = cell(10,1);
 for jj=1:length(locations)   
    cd(matlabroot)
    try
@@ -79,6 +80,17 @@ for jj=1:length(locations)
          if strcmpi( temp3, 'omtools')
             omtf = omtf+1;
             omtoolspath{omtf} = fullfile(pwd,'OMtools');
+            temp=pwd;
+            cd(omtoolspath{omtf})
+            try
+               ot_ver{omtf} = omtools_version;
+            catch
+               ot_ver{omtf} = 'unknown version';
+            end
+            cd(temp)
+            if nargout==0
+               fprintf('%s:  %s\n',omtoolspath{omtf},ot_ver{omtf});
+            end
          end
       end %for ii
    else
@@ -96,7 +108,7 @@ elseif omtf == 1
 elseif omtf > 1
    for m = 1:length(omtoolspath)
       if ~isempty(char(omtoolspath{m}))
-         disp([num2str(m) ': ' char(omtoolspath{m}) ] )
+         disp([num2str(m) ': ' char(omtoolspath{m}) '  ' char(ot_ver{m})] )
       else
          break
       end
@@ -109,7 +121,13 @@ elseif omtf > 1
    omtoolspath = char(omtoolspath{omtp});
 end
 
-try    cd(oldpath)
+if nargout==0
+   clear out omtoolspath
+else
+   out = ot_ver{omtf};
+end
+
+try    cd(olddir)
 catch, end
 
 return

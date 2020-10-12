@@ -1,4 +1,4 @@
-function omtoolspath = setomtools(omtoolspath)
+function omtoolspath = setomtools(omtoolspath,ot_ver)
 
 % written by:  Jonathan Jacobs
 %              March 2017
@@ -13,6 +13,10 @@ if nargin == 0
    return
 end
 
+if nargin < 2
+   ot_ver = 'unknown version';
+end
+
 %sep = filesep;
 omtf = size(omtoolspath,1);
 
@@ -25,7 +29,7 @@ if omtf < 1
    return
 elseif omtf == 1
    %omtoolspath = char(omtoolspath{1});
-   disp( ['Using the OMtools located at ' omtoolspath])
+   %fprintf('OMtools date:%s \nInstalled: %s\n', ot_ver,omtoolspath)
 elseif omtf > 1
    disp('Multiple OMtools folders found:')
    for m = 1:omtf
