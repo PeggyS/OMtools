@@ -22,59 +22,82 @@ end
 % NOTE: on OS X at least, matlabroot is the PACKAGE (really a folder) that
 % is the MATLAB application. Go UP a level to be in the folder containing MATLAB
 oldpath = pwd;
-cd(matlabroot)
-cd ..
-matlabdir = pwd; %#ok<NASGU>
+if strcmpi(homedir,'/home/mluser')
+   homedir='/MATLAB Drive';
+   cd('/MATLAB Drive')
+else
+   cd(matlabroot)
+end
 
 % possible locations where omprefs might be, as of ML2010b
 locations = {
-   {'matlabdir'}; ...
-   {'matlabdir', 'omtools'}; ...
-   {'sharedir'}; ...
-   {'sharedir', 'omtools'}; ...
-   {'matlabroot'}; ...
-   {'matlabroot', 'omtools'}; ...
-   {'matlabroot', 'toolbox'};...
-   {'matlabroot', 'toolbox', 'omtools'}; ...
+   {'homedir'}; ...
    {'homedir', 'documents', 'MATLAB'}; ...
-   {'homedir', 'documents', 'MATLAB', 'omtools'}; ...
+   {'homedir', 'documents', 'MATLAB', 'OMtools'}; ...
    {'homedir', 'documents', 'MATLAB', 'omtools_prefs'}; ...
-   {'homedir', 'documents', 'MATLAB', 'Add-Ons','toolboxes','omtools', 'code'}; ...
+   {'homedir', 'documents', 'MATLAB', 'Add-Ons','toolboxes','OMtools', 'code'}; ...
+   {'sharedir'}; ...
+   {'sharedir', 'OMtools'}; ...
+   {'matlabroot'}; ...
+   {'matlabroot', 'OMtools'}; ...
+   {'matlabroot', 'toolbox'};...
+   {'matlabroot', 'toolbox', 'OMtools'}; ...
    };
 
-ompf=0; omtf=0;						%% omprefs folders found, omtools folders found
-%omtoolspath = findomtools;
+   %{'matlabdir'}; ...
+   %{'matlabdir', 'OMtools'}; ...
 
-for j=1:length(locations)
-   dir_err=0;
-   temp=eval( char(locations{j}(1)) );
-   if ~exist( temp, 'dir')
-      disp( ['dir_error: ' locations{j}] );
+
+ompf=0; omtf=0;						%% omprefs folders found, OMtools folders found
+%omtoolspath = cell(10,1);
+omprefpath = cell(10,1);
+omtoolspath = findomtools;
+
+for jj=1:length(locations)
+   cd(matlabroot)
+   try
+      temp1=char(locations{jj}(1));
+      cd(eval(temp1))
+      dir_err=0;
+      %fprintf('good topdir %d: %s\n',jj,eval(temp1))
+   catch
+      %disp( ['dir_error: ' locations{j}] );
+      %dir_err=1;
+      %fprintf('bad topdir %d: %s\n',jj,eval(temp1))
       continue;
    end
-   cd(temp)
    
    % if there are subdirectories, navigate to them.
-   numsubdir = length(locations{j});
+   numsubdir = length(locations{jj});
    if numsubdir > 1
       dir_err=0;
       for k=2:numsubdir
-         temp=char( locations{j}(k) ); %#ok<NASGU>
-         eval('cd(temp)','dir_err=1;') %#ok<EVLC>
+         temp2=char(locations{jj}(k));
+         try
+            cd(temp2)
+         catch
+            dir_err=1;
+         end
       end % for k
    end %if numsubdir
    
-   if ~dir_err			% we have found a valid omtools folder
-      if strfind(pwd,'OMtools')
-         omtf = omtf+1;
-         omtoolspath{omtf} = pwd; %#ok<AGROW>
-      end
+   if ~dir_err			% we have found a valid OMtools folder
+      %if strfind(pwd,'OMtools') %#ok<STRIFCND>
+         %omtf = omtf+1;
+         %omtoolspath{omtf} = pwd;
+      %end
       dirfiles = dir;
-      for i = 1:length(dirfiles)
-         temp = deblank(dirfiles(i).name);
-         if strcmpi( temp, 'omprefs')				%% we have found a valid omprefs folder
-            ompf=ompf+1;
-            omprefpath{ompf} = [pwd sep 'omprefs']; %#ok<AGROW>
+      for ii = 1:length(dirfiles)
+         temp3 = deblank(dirfiles(ii).name);
+         if strcmpi( temp3,'omtools_prefs')	%% we have found a valid omprefs folder
+            try
+               cd(temp3)
+               cd('omprefs')
+               ompf=ompf+1;
+               omprefpath{ompf} = fullfile(pwd);
+            catch
+               % 
+            end
             %return
          end
       end %for i
@@ -82,7 +105,7 @@ for j=1:length(locations)
 end %for j
 
 if ompf<1
-   disp('Could not find any omtools prefs location. ')
+   disp('Could not find any OMtools prefs location. ')
    disp('I will create an "omprefs" folder.')
    disp('Where do you want me to make it?')
    disp( ' 1. In your existing OMtools folder.')
@@ -96,7 +119,7 @@ if ompf<1
          omtoolspath = char(omtoolspath{1});
          cd(omtoolspath)
          mkdir('omprefs')
-         omprefpath = [omtoolspath sep 'omprefs'];
+         omprefpath = fullfile(omtoolspath,'omprefs');
          cd('omprefs')
       elseif omtf > 1
          %omprefpath = '';
@@ -105,7 +128,7 @@ if ompf<1
          error('Cannot create a folder for OMtools preferences. Aborting.')
       end
    elseif ompchoice==2
-      cd([homedir sep documents sep 'MATLAB'])
+      cd(fullfile(homedir,documents,'MATLAB'))
       if ~exist( [homedir sep documents sep 'MATLAB' sep 'omtools_prefs'],'dir' )
          mkdir('omtools_prefs')
       end
@@ -114,8 +137,8 @@ if ompf<1
       omprefpath = pwd;
       cd(oldpath)
    elseif ompchoice==3
-      cd([sharedir sep 'MATLAB'])
-      if ~exist( [sharedir 'MATLAB' sep 'omtools_prefs'],'dir' )
+      cd(fullfile(sharedir,'MATLAB'))
+      if ~exist( fullfile(sharedir,'MATLAB','omtools_prefs'),'dir' )
          mkdir('omtools_prefs')
       end
       cd('omtools_prefs')
@@ -147,7 +170,7 @@ elseif ompf >1
          if choice == m
             % do nothing
          else
-            % add an 'x' to the front of the other omtools folders
+            % add an 'x' to the front of the other OMtools folders
             a = strfind(omprefpath{m}, 'omprefs');
             b = [ omprefpath{m}(1:a-1) 'OM_x' omprefpath{m}(a+2:end) ];
             movefile(omprefpath{m}, b);

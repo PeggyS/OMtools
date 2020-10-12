@@ -49,9 +49,9 @@ numcalpts = size(max_adj,2);
 %hor_stm=[]; vrt_stm=[];
 %rem = strtrim(lower(chnlstr));
 [~,chan_count]=size(newdata);
-for i=1:chan_count   
-   if strcmp('st', chName{i} ), hor_ind=i; end
-   if strcmp('sv', chName{i} ), vrt_ind=i; end
+for ii=1:chan_count   
+   if strcmp('st', chName{ii} ), hor_ind=ii; end
+   if strcmp('sv', chName{ii} ), vrt_ind=ii; end
 end
 
 %if exist('hor_ind','var')
@@ -87,31 +87,31 @@ neworder=stripnan(neworder);
 % so let's do the offset and scaling
 %scalemethod = lower(input('Use old piecewise (l)inear or new (s)mooth scaling? ','s'));
 %scalemethod = 'l';
-for i = neworder
+for ii = neworder
    if lower(rectype(1)) == 'c' || lower(rectype(1)) == 's'
-      newdata(:,i) = newdata(:,i) - z_adj(i);
-      newdata(:,i) = newdata(:,i) / max_adj(i,1);
+      newdata(:,ii) = newdata(:,ii) - z_adj(ii);
+      newdata(:,ii) = newdata(:,ii) / max_adj(ii,1);
       
    elseif lower(rectype(1)) == 'r'
-      newdata(:,i) = sincorrect( newdata(:,i), z_adj(i), max_adj(i,1), maxcalpt(i,1) );
+      newdata(:,ii) = sincorrect( newdata(:,ii), z_adj(ii), max_adj(ii,1), maxcalpt(ii,1) );
       
    elseif lower(rectype(1)) == 'i' || lower(rectype(1)) == 'v'
       if numcalpts == 1
          % standard calibration
-         newdata(:,i) = adj(newdata(:,i), z_adj(i),...
-            maxcalpt(i,:), max_adj(i,:), mincalpt(i,:), min_adj(i,:));
+         newdata(:,ii) = adj(newdata(:,ii), z_adj(ii),...
+            maxcalpt(ii,:), max_adj(ii,:), mincalpt(ii,:), min_adj(ii,:));
       else
          % extended calibration
          %unscaled = newdata(:,i);
-         newdata(:,i) = adj(newdata(:,i), z_adj(i),...
-            maxcalpt(i,:), max_adj(i,:), mincalpt(i,:), min_adj(i,:));
+         newdata(:,ii) = adj(newdata(:,ii), z_adj(ii),...
+            maxcalpt(ii,:), max_adj(ii,:), mincalpt(ii,:), min_adj(ii,:));
          
          if (0) %if strcmp( scalemethod(1),'s' )
             % the smooth scaling will only be applied to eye-movement data channels
             % we leave stim channels alone because there is no reason to use it.
-            if ( strcmp(chName{i},'rh') || strcmp(chName{i},'lh') ) %#ok<UNRCH>
+            if ( strcmp(chName{ii},'rh') || strcmp(chName{ii},'lh') ) %#ok<UNRCH>
                % which plane are we working in, and which is the corresponding stim?
-               temp = chName{i};
+               temp = chName{ii};
                plane = temp(2);
                if strcmp(plane, 'h')
                   stim = hor_stm;
@@ -125,11 +125,11 @@ for i = neworder
                % Simplest simple solution: apply old-style cal to a vector of [-lim ... lim]
                % and then pick out the points that have scaled to match the calibration points.
                % Perform the cal here, pass the result to smoothscale and do the real work there.
-               testvect = (mincalpt(i,end):0.01:maxcalpt(i,end))';               
+               testvect = (mincalpt(ii,end):0.01:maxcalpt(ii,end))';               
                scaled_vect = adj(testvect, 0,...
-                  maxcalpt(i,:), max_adj(i,:), mincalpt(i,:), min_adj(i,:));               
-               newdata(:,i) = smoothscale( scaled_vect, newdata(:,i), z_adj(i),...
-                  maxcalpt(i,:), mincalpt(i,:), stim );
+                  maxcalpt(ii,:), max_adj(ii,:), mincalpt(ii,:), min_adj(ii,:));               
+               newdata(:,ii) = smoothscale( scaled_vect, newdata(:,ii), z_adj(ii),...
+                  maxcalpt(ii,:), mincalpt(ii,:), stim );
             end
             
          end % if scalemethod

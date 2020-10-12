@@ -59,6 +59,7 @@ cd(findomtools); cd('rd')
 % Window: "C:\Program Files (x86)\SR Research\EyeLink\EDF_Access_API\Example"
 % Linux:  /usr/share/edfapi/EDF_Access_API/Example
 fsp = filesep;
+secret=0;
 %bindir_err=0; 
 if isunix
    if ismac
@@ -391,7 +392,9 @@ if isempty(raw)
    disp('No eye-movement data found. Aborting.')
    return
 end
-cd(curdir)
+
+try cd(curdir)
+catch, end
 
 % chop off everything after the final tab to remove the non-numeric last column.
 disp('Data successfully loaded. Converting to numeric values. Tick tock, tick tock.')
@@ -507,15 +510,15 @@ for z = 1:length(block)
       switch numcols
          case 9
             disp( 'Default EDF->ASC export assumption: ' )
-            disp( '   1) time, 2) lh, 3) lv, 4) lp (pupil), 5) rh, 6) rv, 7) rp, 8) hh, 9) hv' )
+            disp( '   1) time, 2) lh, 3) lv, 4) lp (pupil), 5) rh, 6) rv, 7) rp, 8) hh, 9) hv 10) dist' )
             disp( '   Will save in this order: [lh rh lv rv hh hv]' )
             ch_err_flag=1;
             commandwindow
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
-               lh_chan=2; lv_chan=3; lp_chan=4; rh_chan=5; rv_chan=6; rp_chan=7;
-               hh_chan=8; hv_chan=9;
-               %out_chans = {'lh';'rh';'lv';'rv'};
+               lh_chan=1; lv_chan=2; lp_chan=3; rh_chan=4; rv_chan=5; rp_chan=6;
+               hh_chan=7; hv_chan=8;
+               %out_chans = {'lh';'rh';'lv';'rv''hv';'hv'};
                ch_err_flag = 0;
             end
             
@@ -527,7 +530,7 @@ for z = 1:length(block)
             commandwindow
             yorn = input('Is this correct? (y/n) ','s');
             if strcmpi(yorn,'y')
-               lh_chan=2; lv_chan=3; lp_chan=4; rh_chan=5; rv_chan=6; rp_chan=7;
+               lh_chan=1; lv_chan=2; lp_chan=3; rh_chan=4; rv_chan=5; rp_chan=6;
                %out_chans = {'lh';'rh';'lv';'rv'};
                ch_err_flag = 0;
             end
@@ -666,11 +669,13 @@ for z = 1:length(block)
          dat_out=cat(1,dat_out, data(seg,hh_chan));
          c=c+1;
          out_chans{x}{c}='hh';
+         %keyboard
       end
       if exist('hv_chan','var') && ~all(isnan(data(seg,hv_chan)))
          dat_out=cat(1,dat_out, data(seg,hv_chan));
          c=c+1;
          out_chans{x}{c}='hv';
+         %keyboard
       end
       %{
       if exist('hh_chan','var') && ~all(isnan(data(seg,hh_chan)))

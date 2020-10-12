@@ -3,18 +3,12 @@ function ztprefpath = findztprefs
 % written by:  Jonathan Jacobs
 %              February 2011
 
-ztprefpath=[];
+%ztprefpath=[];
 sep = getsep;
 
 % Does omprefs folder exist?  If it does, use zt preferences saved loose in omprefs folder.
 % If it does not exist, use 'findztprefs' and use ztprefs folder in zoomtool folder.
-% if there is no 'ztprefs' folder, create one in the zoomtools folder.
-
-%if exist('omprefs','dir') == 7
-%	cd(findomprefs)
-%   ztprefpath=findomprefs;
-%	return
-%end
+% if there is no 'ztprefs' folder, create one in the zoOMtools folder.
 
 comp = lower( computer('arch') );
 if strcmp(comp(1),'m') || strcmp(comp(1),'g')
@@ -28,33 +22,54 @@ elseif strcmp(comp(1),'p')|| strcmp(comp(1),'w')
 end
 
 oldpath = pwd;
-cd(matlabroot)
-cd ..
-matlabdir = pwd;
+if strcmpi(homedir,'/home/mluser')
+   homedir='/MATLAB Drive';
+   cd('/MATLAB Drive')
+else
+   cd(matlabroot)
+end
+
+%[pn,fn,ext]=fileparts(mfilename('fullpath'));
+%cd(pn)
+%cd ..
+%if s
+%%cd(matlabroot)
+%temp1=pwd;
+%cd ..
+%temp2=pwd;
+
+%matlabdir = pwd;
 
 % possible locations for zoomtool prefs as of ML2010b
 locations = {
-   {'matlabdir','omtools','zoomtool'}; ...
-   {'matlabroot','omtools','zoomtool'}; ...
-   {'matlabroot','toolbox','omtools', 'zoomtool'}; ...
+   {'homedir','omtools_prefs'}; ...
+   {'homedir','OMtools','omtools_prefs'}; ...
+   {'homedir','OMtools','zoomtool'}; ...
+   {'homedir','documents','MATLAB','zoomtool'}; ...
+   {'homedir','documents','MATLAB','OMtools','zoomtool'}; ...
+   {'homedir','documents','MATLAB','omtools_prefs'}; ...
+   {'homedir','documents','MATLAB','Add-Ons','toolboxes','OMtools','code','zoomtool'}; ...
+   {'matlabroot','OMtools','zoomtool'}; ...
+   {'matlabroot','toolbox','OMtools', 'zoomtool'}; ...
    {'sharedir','documents','MATLAB','omtools_prefs'}; ...
    {'sharedir','documents','MATLAB','zoomtool'}; ...
-   {'sharedir','documents','MATLAB','omtools','zoomtool'}; ...
-   {'homedir','documents','MATLAB','omtools_prefs'}; ...
-   {'homedir','documents','MATLAB','zoomtool'}; ...
-   {'homedir','documents','MATLAB','omtools','zoomtool'}; ...
-   {'homedir','documents','MATLAB','Add-Ons','toolboxes','omtools','code','zoomtool'}; ...
+   {'sharedir','documents','MATLAB','OMtools','zoomtool'}; ...
    };
 
 ztf=0; ztpf=0;             %% zoomtool folders found, ztprefs folders found
+ztpath = cell(10,1);
+ztprefpath = cell(10,1);
 for j=1:length(locations)
    dir_err=0;
-   temp=eval(char( locations{j}(1) ));
-   if ~exist( temp, 'dir')
-      disp( ['dir_error: ' locations{j}] );
+   try
+      temp=char(locations{j}(1));
+      cd(matlabroot)
+      cd(eval(temp));
+   catch
+      %disp( [eval(temp) ' is not a valid directory. Skipping :(' ] );
+      %keyboard
       continue;
    end
-   cd(temp)
    
    % if there are given subdirectories, navigate to them.
    numsubdir = length(locations{j});
@@ -62,11 +77,15 @@ for j=1:length(locations)
       dir_err=0;
       for k=2:numsubdir
          temp=char( locations{j}(k) ); %#ok<*NASGU>
-         eval('cd(temp)','dir_err=1;') %#ok<*EVLC>
+         try
+            cd(temp)
+         catch
+            dir_err=1;
+         end
       end % for k
    end %if numsubdir
    
-   if ~dir_err   % we have found a valid zoomtools folder
+   if ~dir_err   % we have found a valid zoOMtools folder
       ztf = ztf+1;
       ztpath{ztf} = pwd;
       dirfiles = dir;
@@ -74,10 +93,12 @@ for j=1:length(locations)
          temp = deblank(dirfiles(i).name);
          if strcmpi( temp, 'ztprefs')				% we have found a valid zt prefs folder
             ztpf = ztpf+1;
-            ztprefpath{ztpf} = [pwd sep 'ztprefs']; %#ok<*AGROW>
+            ztprefpath{ztpf} = fullfile(pwd,'ztprefs'); %#ok<*AGROW>
             %return
          end
       end %for i
+   else
+      %keyboard
    end %if ~dir_err
    
 end %for j
@@ -87,8 +108,8 @@ if ztpf<1
    disp('I will create a "ztprefs" folder.')
    disp('Where do you want me to make it?')
    disp(' 1. In your existing zoomtool folder.')
-   disp([' 2. In ' homedir sep documents sep ' omtools_prefs (recommended)' ])
-   disp([' 3. In ' sharedir sep 'omtools_prefs (if multiple user accounts run MATLAB)' ])
+   disp([' 2. In ' homedir sep documents sep ' OMtools_prefs (recommended)' ])
+   disp([' 3. In ' sharedir sep 'OMtools_prefs (if multiple user accounts run MATLAB)' ])
    commandwindow
    ztchoice = input('--> ');
    
@@ -97,7 +118,7 @@ if ztpf<1
          ztpath = char(ztpath{1});
          cd(ztpath)
          mkdir('ztprefs')
-         ztprefpath = [ztpath sep 'ztprefs'];
+         ztprefpath = fullfile(ztpath,'ztprefs');
          cd('ztprefs')
       elseif ztf > 1
          %ztprefpath = '';
@@ -110,8 +131,8 @@ if ztpf<1
       end
       
    elseif ztchoice==2
-      cd([homedir sep documents sep 'MATLAB'])
-      if ~exist( [homedir sep documents sep 'MATLAB' sep 'omtools_prefs'],'dir' )
+      cd(fullfile(homedir,documents,'MATLAB'))
+      if ~exist( fullfile(homedir,documents,'MATLAB','omtools_prefs'),'dir' )
          mkdir('omtools_prefs')
       end
       cd('omtools_prefs')
@@ -119,8 +140,8 @@ if ztpf<1
       ztprefpath = pwd;
       cd(oldpath)
    elseif ztchoice==3
-      cd([sharedir sep 'MATLAB'])
-      if ~exist( [sharedir 'MATLAB' sep 'omtools_prefs'],'dir' )
+      cd(fullfile(sharedir,'MATLAB'))
+      if ~exist( fullfile(sharedir,'MATLAB','omtools_prefs'),'dir' )
          mkdir('omtools_prefs')
       end
       cd('omtools_prefs')
@@ -153,7 +174,7 @@ elseif ztpf >1
          if choice == m
             % do nothing
          else
-            % add an 'x' into the name of the other omtools folders
+            % add an 'x' into the name of the other OMtools folders
             a = strfind(ztprefpath{m}, 'ztprefs');
             b = [ ztprefpath{m}(1:a-1) 'zt_x_' ztprefpath{m}(a+2:end) ];
             movefile(ztprefpath{m}, b);

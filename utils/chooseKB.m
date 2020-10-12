@@ -55,7 +55,7 @@ for kbl = 1:length(kbIndices)
    
    % do you feel lucky, punk? Well, do you?
    if ~forcecheck
-      if strfind(tempKBname, chickendinner) %#ok<STRIFCND>
+      if contains(tempKBname, chickendinner)
          kbIndex = kbIndices(kbl);
          kbName  = product(kbl);
          return
